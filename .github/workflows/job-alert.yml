@@ -1,0 +1,44 @@
+# .github/workflows/job-alert.yml
+name: Job Alert System
+
+on:
+  schedule:
+    - cron: '0 * * * *' # Run every 1 hour
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  run-job-search:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Run Job Search
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+        EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
+        EMAIL_USER: ${{ secrets.EMAIL_USER }}
+        EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+        RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+        INTERNSHALA_WFH_URL: https://internshala.com/internships/work-from-home-internships/
+      run: node index.js --single-run
+
+    - name: Commit and push sent_jobs.json
+      run: |
+        git config --global user.name "GitHub Action"
+        git config --global user.email "action@github.com"
+        git add sent_jobs.json
+        git commit -m "chore: update sent jobs log [skip ci]" || echo "No changes to commit"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
