@@ -9,62 +9,47 @@ async function filterJobs(jobs) {
     if (jobs.length === 0) return [];
 
     const prompt = `
-        You are an expert technical recruiter matching candidates for High-Quality Tech Internships and Entry-Level Roles.
+        You are an AI specialized in technical job matching. Evaluate these internships/jobs from Internshala.
         
-        Candidate Profile:
-        Skills: Full Stack Development (MERN, Node.js, React), AI, Automation, Python.
-        Looking for: Software Engineer Internships, Web Development, Backend/Frontend, AI/ML roles.
-        
-        CRITICAL REJECTION RULES (Return ONLY matching tech jobs):
-        - REJECT NGO, Fundraising, Social Work, or Non-Profit roles.
-        - REJECT Teaching, Content Writing, Graphic Design, or Sales.
-        - REJECT "1 Week Fundraising", "Campus Ambassador", or "Mental Health Outreach".
-        - ONLY ACCEPT: MERN, Node.js, React, Python, Django, Flask, Java, C++, AI, ML, Data Science roles.
+        CRITESIA:
+        - Match for skills: Full Stack Development, Node.js, React, MERN, Python, AI, Automation, Java, C++, Software Engineering.
+        - Accept: Internships, Entry-level roles, Technical Product Management.
+        - REJECT: NGO, Fundraising, Content Writing, Graphic Design, Sales, Marketing, Campus Ambassador, Mental Health, NGO operations.
 
-        Jobs to evaluate (JSON):
+        JOBS (JSON Format):
         ${JSON.stringify(jobs)}
 
-        Format your response EXCLUSIVELY as a JSON array of objects. 
-        Each object MUST have:
-        - "id": The original job ID.
-        - "title": Job title.
-        - "company": Company name.
-        - "link": Apply link.
-        - "reason": A 1st-person single sentence why this matches (e.g., "Matches your MERN stack skills perfectly").
-
-        If NO jobs match, return an empty array [].
+        RETURN format:
+        Return ONLY a JSON object with a key "matches" containing an array of matched jobs.
+        Example: { "matches": [{ "id": "...", "title": "...", "company": "...", "link": "...", "reason": "..." }] }
     `;
 
     try {
         const chatCompletion = await groq.chat.completions.create({
-            messages: [
-                {
-                    role: "user",
-                    content: prompt,
-                },
-            ],
+            messages: [{ role: "user", content: prompt }],
             model: "llama-3.3-70b-versatile",
-            temperature: 0,
+            temperature: 0.1,
             response_format: { type: "json_object" }
         });
 
-        const rawResponse = chatCompletion.choices[0].message.content;
+        let content = chatCompletion.choices[0].message.content;
+        console.log("DEBUG: Raw AI Response:", content);
+
+        let data = JSON.parse(content);
         
-        // Groq sometimes wraps in an object with a key like "jobs" if response_format is used
-        let result = JSON.parse(rawResponse);
-        
-        if (result.jobs && Array.isArray(result.jobs)) {
-            return result.jobs;
-        } else if (Array.isArray(result)) {
-            return result;
-        } else {
-            // Handle common keys like "matches" or search for the array
-            const key = Object.keys(result).find(k => Array.isArray(result[k]));
-            return key ? result[key] : [];
+        // Handle various possible JSON structures from LLM
+        if (data.matches && Array.isArray(data.matches)) {
+            return data.matches;
+        } else if (Array.isArray(data)) {
+            return data;
+        } else if (data.jobs && Array.isArray(data.jobs)) {
+            return data.jobs;
         }
+        
+        return [];
 
     } catch (error) {
-        console.error("GROQ API ERROR:", error.message);
+        console.error("GROQ FILTER ERROR:", error.message);
         return [];
     }
 }

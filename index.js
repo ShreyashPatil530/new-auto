@@ -13,7 +13,10 @@ const TECHNICAL_URLS = [
     'https://internshala.com/internships/work-from-home-full-stack-development-internships/',
     'https://internshala.com/internships/work-from-home-python-django-internships/',
     'https://internshala.com/internships/work-from-home-data-science-internships/',
-    'https://internshala.com/internships/work-from-home-machine-learning-internships/'
+    'https://internshala.com/internships/work-from-home-machine-learning-internships/',
+    'https://internshala.com/internships/work-from-home-javascript-development-internships/',
+    'https://internshala.com/internships/node-js-development-internship/',
+    'https://internshala.com/internships/software-development-internship/'
 ];
 
 async function runJobSearch() {
