@@ -1,65 +1,71 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const Groq = require("groq-sdk");
 const dotenv = require("dotenv");
 
 dotenv.config();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 async function filterJobs(jobs) {
     if (jobs.length === 0) return [];
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
     const prompt = `
-    You are an expert recruitment assistant.
-    Given a list of job/internship opportunities from Internshala, filter them based on the candidate's profile:
-    - Target Skills (MANDATORY): Full Stack Development, MERN Stack, Python, Node.js, React, Javascript, AI, ML, Data Science.
-    - Role Type: Only software development, coding, and AI.
-    - STRICT REJECTION: 
-        1. Reject any job/internship from an NGO or Foundation.
-        2. MANDATORY REJECT: Titles containing "Artist", "Design", "UI/UX", "Graphics", "Animator", "Video Editor".
-        3. MANDATORY REJECT: Roles containing "Volunteering", "Fundraising", "Sales", "Marketing", "HR", "Content", "Management", "NGO".
-        4. No exceptions for Artist/Designer roles even if they mention technology.
-    - Quality Control: Only provide coding (Frontend/Backend/Fullstack) or Data Science/AI roles.
+        You are an expert technical recruiter matching candidates for High-Quality Tech Internships and Entry-Level Roles.
+        
+        Candidate Profile:
+        Skills: Full Stack Development (MERN, Node.js, React), AI, Automation, Python.
+        Looking for: Software Engineer Internships, Web Development, Backend/Frontend, AI/ML roles.
+        
+        CRITICAL REJECTION RULES (Return ONLY matching tech jobs):
+        - REJECT NGO, Fundraising, Social Work, or Non-Profit roles.
+        - REJECT Teaching, Content Writing, Graphic Design, or Sales.
+        - REJECT "1 Week Fundraising", "Campus Ambassador", or "Mental Health Outreach".
+        - ONLY ACCEPT: MERN, Node.js, React, Python, Django, Flask, Java, C++, AI, ML, Data Science roles.
 
-    Return an empty JSON array [] if no truly relevant software development/AI roles are found.
-    Select top 5-10 technical jobs if available.
+        Jobs to evaluate (JSON):
+        ${JSON.stringify(jobs)}
 
-    Input List (JSON):
-    ${JSON.stringify(jobs, null, 2)}
+        Format your response EXCLUSIVELY as a JSON array of objects. 
+        Each object MUST have:
+        - "id": The original job ID.
+        - "title": Job title.
+        - "company": Company name.
+        - "link": Apply link.
+        - "reason": A 1st-person single sentence why this matches (e.g., "Matches your MERN stack skills perfectly").
 
-    Output Format:
-    Return only a JSON array. Each object in the array should contain 'id', 'title', 'company', 'applyLink', and 'relevanceReason'.
-    The 'relevanceReason' should be 1 sentence explaining which of the candidate's skills (MERN, React, AI, etc) match this role.
-    Include ONLY the JSON without any markdown formatting or extra text.
+        If NO jobs match, return an empty array [].
     `;
 
     try {
-        const result = await model.generateContent(prompt);
-        const responseText = result.response.text();
-
-        // Remove markdown wrapper if present
-        const cleanedResponse = responseText.replace(/```json|```/g, "").trim();
-        let filteredJobs = JSON.parse(cleanedResponse);
-
-        // EXTRA PROTECTIVE PROGRAMMATIC FILTER
-        const blacklist = ["artist", "design", "ngo", "volunteering", "fundraising", "sales", "marketing", "content", "environment"];
-        filteredJobs = filteredJobs.filter(job => {
-            const lowTitle = job.title.toLowerCase();
-            const isBlacklisted = blacklist.some(word => lowTitle.includes(word));
-            return !isBlacklisted;
+        const chatCompletion = await groq.chat.completions.create({
+            messages: [
+                {
+                    role: "user",
+                    content: prompt,
+                },
+            ],
+            model: "llama-3.3-70b-versatile",
+            temperature: 0,
+            response_format: { type: "json_object" }
         });
 
-        return filteredJobs;
-    } catch (error) {
-        console.error("Error filtering jobs with AI (using fallback):", error.message);
+        const rawResponse = chatCompletion.choices[0].message.content;
         
-        // APPLY LOCAL FILTER TO FALLBACK TOO
-        const blacklist = ["artist", "design", "ngo", "volunteering", "fundraising", "sales", "marketing", "content", "environment"];
-        return jobs.filter(job => {
-            const lowTitle = job.title.toLowerCase();
-            return !blacklist.some(word => lowTitle.includes(word));
-        }).slice(0, 10); 
+        // Groq sometimes wraps in an object with a key like "jobs" if response_format is used
+        let result = JSON.parse(rawResponse);
+        
+        if (result.jobs && Array.isArray(result.jobs)) {
+            return result.jobs;
+        } else if (Array.isArray(result)) {
+            return result;
+        } else {
+            // Handle common keys like "matches" or search for the array
+            const key = Object.keys(result).find(k => Array.isArray(result[k]));
+            return key ? result[key] : [];
+        }
+
+    } catch (error) {
+        console.error("GROQ API ERROR:", error.message);
+        return [];
     }
 }
 

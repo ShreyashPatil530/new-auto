@@ -26,7 +26,7 @@ jobs:
 
     - name: Run Job Search
       env:
-        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
         EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
         EMAIL_USER: ${{ secrets.EMAIL_USER }}
