@@ -8,18 +8,25 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 async function filterJobs(jobs) {
     if (!jobs || jobs.length === 0) return [];
 
+    // Groq has per-request token limits. 
+    // We will take only the first 30 jobs to ensure we don't hit the 413 error.
+    const limitedJobs = jobs.slice(0, 30);
+    console.log(`- Passing ${limitedJobs.length} jobs to Groq AI (Chunking to avoid 413 error).`);
+
     const prompt = `
-        Evaluate these Internshala internships/jobs.
-        Target Skills: React, Node.js, Full Stack, Python, AI, ML, Automation.
-        Target Roles: Tech Interns, Software Engineers, Web Dev.
-        REJECT: NGO, Fundraising, Campus Ambassador, Sales, Content Writing.
+        Evaluate health/tech Internshala jobs.
+        Candidate: Full Stack, Node.js, React, Python, AI, ML, Automation.
+        Role: Software Engineer, Web Dev, Backend, Frontend.
+        
+        REJECT: NGO, Fundraising, Campus Ambassador, Sales, Content Writing, HR.
+        NO Graphic Design or Video Editing.
 
-        JOBS:
-        ${JSON.stringify(jobs)}
+        Jobs (JSON):
+        ${JSON.stringify(limitedJobs)}
 
-        Response format:
-        Return ONLY valid JSON in this format: { "matches": [{ "id": "...", "title": "...", "company": "...", "link": "...", "reason": "..." }] }.
-        If none match, return { "matches": [] }.
+        Output:
+        Return ONLY valid JSON: { "matches": [{ "id": "...", "title": "...", "company": "...", "link": "...", "reason": "..." }] }.
+        Return { "matches": [] } if none.
     `;
 
     try {
@@ -31,17 +38,11 @@ async function filterJobs(jobs) {
         });
 
         let content = chatCompletion.choices[0].message.content;
-        console.log("AI Response Received.");
         
         try {
             const data = JSON.parse(content);
-            if (data.matches && Array.isArray(data.matches)) {
-                return data.matches;
-            }
-            if (Array.isArray(data)) return data;
+            return data.matches || data || [];
         } catch (parseError) {
-            console.error("AI JSON Parse Error:", parseError.message);
-            // Fallback: try to find array in text if somehow output wasn't clean
             const match = content.match(/\[.*\]/s);
             if (match) return JSON.parse(match[0]);
         }
@@ -49,6 +50,10 @@ async function filterJobs(jobs) {
         return [];
 
     } catch (error) {
+        if (error.status === 413 || error.message.includes('Limit 12000')) {
+             console.warn("Groq error: Request too large. Retrying with only 10 jobs.");
+             return await filterJobs(jobs.slice(0, 10)); // Recursive retry with smaller set
+        }
         console.error("GROQ CRITICAL ERROR:", error.message);
         return [];
     }
