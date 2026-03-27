@@ -24,7 +24,7 @@ async function sendEmail(jobs) {
             <h3 style="margin: 0 0 10px 0; color: #1a73e8;">${job.title}</h3>
             <p style="margin: 0 0 5px 0;"><strong>Company:</strong> ${job.company}</p>
             <p style="margin: 0 0 10px 0; font-size: 0.9em; color: #555;"><i>Reason:</i> ${job.relevanceReason || 'Highly relevant skill match'}</p>
-            <a href="${job.applyLink}" style="display: inline-block; padding: 10px 20px; color: white; background-color: #1a73e8; text-decoration: none; border-radius: 5px; font-weight: bold;">Apply Now</a>
+            <a href="${job.applyLink || job.link || '#'}" style="display: inline-block; padding: 10px 20px; color: white; background-color: #1a73e8; text-decoration: none; border-radius: 5px; font-weight: bold;">Apply Now</a>
         </div>
     `).join("");
 
