@@ -53,7 +53,9 @@ async function runJobSearch() {
         }
 
     } catch (error) {
-        console.error('CRITICAL: System error in job search run:', error.message);
+        console.error('CRITICAL ERROR:', error.message);
+        console.error(error.stack);
+        throw error; // Re-throw so GitHub Actions actually catches the failure
     }
     
     console.log(`[${new Date().toLocaleString()}] Cycle complete.\n`);

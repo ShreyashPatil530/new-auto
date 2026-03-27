@@ -9,6 +9,7 @@ async function fetchJobs(urls) {
         try {
             console.log(`- Fetching from: ${url}`);
             const response = await axios.get(url, {
+                timeout: 5000,
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
                 }
@@ -18,14 +19,15 @@ async function fetchJobs(urls) {
 
             $('.individual_internship').each((index, element) => {
                 const titleElement = $(element).find('.job-title-href');
-                if (titleElement.length > 0) {
-                    const title = titleElement.text().trim();
-                    const relativeLink = titleElement.attr('href');
+                const relativeLink = titleElement.attr('href');
+                
+                if (titleElement.length > 0 && relativeLink) {
+                    const title = titleElement.text().trim() || "Internship";
+                    const company = $(element).find('.company-name').first().text().trim() || "Unknown Company";
                     const applyLink = `https://internshala.com${relativeLink}`;
-                    const company = $(element).find('.company-name').text().trim();
                     
-                    // Extract Job ID
-                    const jobId = relativeLink.split('/').pop();
+                    // Robust Job ID Extraction
+                    const jobId = relativeLink.split('/').filter(p => p).pop() || Math.random().toString(36).substr(5);
 
                     if (!seenIds.has(jobId)) {
                         seenIds.add(jobId);
@@ -39,7 +41,7 @@ async function fetchJobs(urls) {
                 }
             });
         } catch (error) {
-            console.error(`Error fetching from ${url}:`, error.message);
+            console.warn(`Warning: Could not fetch from ${url}. Error: ${error.message}`);
         }
     }
 

@@ -6,50 +6,50 @@ dotenv.config();
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 async function filterJobs(jobs) {
-    if (jobs.length === 0) return [];
+    if (!jobs || jobs.length === 0) return [];
 
     const prompt = `
-        You are an AI specialized in technical job matching. Evaluate these internships/jobs from Internshala.
-        
-        CRITESIA:
-        - Match for skills: Full Stack Development, Node.js, React, MERN, Python, AI, Automation, Java, C++, Software Engineering.
-        - Accept: Internships, Entry-level roles, Technical Product Management.
-        - REJECT: NGO, Fundraising, Content Writing, Graphic Design, Sales, Marketing, Campus Ambassador, Mental Health, NGO operations.
+        Evaluate these Internshala internships/jobs.
+        Target Skills: React, Node.js, Full Stack, Python, AI, ML, Automation.
+        Target Roles: Tech Interns, Software Engineers, Web Dev.
+        REJECT: NGO, Fundraising, Campus Ambassador, Sales, Content Writing.
 
-        JOBS (JSON Format):
+        JOBS:
         ${JSON.stringify(jobs)}
 
-        RETURN format:
-        Return ONLY a JSON object with a key "matches" containing an array of matched jobs.
-        Example: { "matches": [{ "id": "...", "title": "...", "company": "...", "link": "...", "reason": "..." }] }
+        Response format:
+        Return ONLY valid JSON in this format: { "matches": [{ "id": "...", "title": "...", "company": "...", "link": "...", "reason": "..." }] }.
+        If none match, return { "matches": [] }.
     `;
 
     try {
         const chatCompletion = await groq.chat.completions.create({
             messages: [{ role: "user", content: prompt }],
             model: "llama-3.3-70b-versatile",
-            temperature: 0.1,
+            temperature: 0,
             response_format: { type: "json_object" }
         });
 
         let content = chatCompletion.choices[0].message.content;
-        console.log("DEBUG: Raw AI Response:", content);
-
-        let data = JSON.parse(content);
+        console.log("AI Response Received.");
         
-        // Handle various possible JSON structures from LLM
-        if (data.matches && Array.isArray(data.matches)) {
-            return data.matches;
-        } else if (Array.isArray(data)) {
-            return data;
-        } else if (data.jobs && Array.isArray(data.jobs)) {
-            return data.jobs;
+        try {
+            const data = JSON.parse(content);
+            if (data.matches && Array.isArray(data.matches)) {
+                return data.matches;
+            }
+            if (Array.isArray(data)) return data;
+        } catch (parseError) {
+            console.error("AI JSON Parse Error:", parseError.message);
+            // Fallback: try to find array in text if somehow output wasn't clean
+            const match = content.match(/\[.*\]/s);
+            if (match) return JSON.parse(match[0]);
         }
         
         return [];
 
     } catch (error) {
-        console.error("GROQ FILTER ERROR:", error.message);
+        console.error("GROQ CRITICAL ERROR:", error.message);
         return [];
     }
 }
