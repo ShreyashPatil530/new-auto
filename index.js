@@ -8,15 +8,22 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const TECHNICAL_URLS = [
-    'https://internshala.com/internships/work-from-home-computer-science-internships/',
-    'https://internshala.com/internships/work-from-home-web-development-internships/',
-    'https://internshala.com/internships/work-from-home-full-stack-development-internships/',
-    'https://internshala.com/internships/work-from-home-python-django-internships/',
-    'https://internshala.com/internships/work-from-home-data-science-internships/',
-    'https://internshala.com/internships/work-from-home-machine-learning-internships/',
-    'https://internshala.com/internships/work-from-home-javascript-development-internships/',
-    'https://internshala.com/internships/node-js-development-internship/',
-    'https://internshala.com/internships/software-development-internship/'
+    'https://internshala.com/jobs/full-stack-development-jobs/',
+    'https://internshala.com/jobs/web-development-jobs/',
+    'https://internshala.com/jobs/node-js-development-jobs/',
+    'https://internshala.com/jobs/python-django-jobs/',
+    'https://internshala.com/jobs/machine-learning-jobs/',
+    'https://internshala.com/jobs/data-science-jobs/',
+    'https://internshala.com/jobs/artificial-intelligence-ai-jobs/',
+    'https://internshala.com/jobs/software-development-jobs/',
+    'https://internshala.com/jobs/java-development-jobs/',
+    'https://internshala.com/jobs/computer-science-jobs/'
+];
+
+const COMPANY_BLOCKLIST = [
+    'Symonis', 'Tripple One Solutions', 'CareerNest', 'Alphabt', 'CloudZapier', 
+    'Basti Ki Pathshala Foundation', 'Emoolar Technology Private Limited', 
+    'Pawzz Foundation', 'JP IT STAFFING LLC', 'Medius Technologies Private Limited'
 ];
 
 async function runJobSearch() {
@@ -27,8 +34,22 @@ async function runJobSearch() {
         const allJobs = await fetchJobs(TECHNICAL_URLS);
         console.log(`- Scraped ${allJobs.length} potential technical jobs.`);
 
-        // Step 2: Handle Duplicates
-        const freshJobs = filterSentJobs(allJobs);
+        // Step 2: Handle Duplicates & Blocklist
+        let freshJobs = filterSentJobs(allJobs);
+        
+        // Apply Company Blocklist
+        const beforeBlockCount = freshJobs.length;
+        freshJobs = freshJobs.filter(job => 
+            !COMPANY_BLOCKLIST.some(blocked => 
+                job.company.toLowerCase().includes(blocked.toLowerCase())
+            )
+        );
+        const blockedCount = beforeBlockCount - freshJobs.length;
+
+        if (blockedCount > 0) {
+            console.log(`- Removed ${blockedCount} jobs from blocked companies.`);
+        }
+
         console.log(`- Found ${freshJobs.length} new jobs to process.`);
 
         if (freshJobs.length === 0) {
@@ -72,7 +93,7 @@ async function runJobSearch() {
         process.exit(0);
     } else {
         console.log('--- Job Automation System (CONTINUOUS MODE) ---');
-        console.log(`Tracking URL: ${INTERNSHALA_URL}`);
+        console.log(`Tracking ${TECHNICAL_URLS.length} categories.`);
         console.log('Frequency: Every 1 hour');
         
         // Run immediately once on start

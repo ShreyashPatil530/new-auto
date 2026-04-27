@@ -13,17 +13,31 @@ async function filterJobs(jobs) {
     console.log(`- Filtering ${limitedJobs.length} jobs via Groq AI...`);
 
     const prompt = `
-        Evaluate these Internshala jobs. 
-        Skills: React, Node.js, Full Stack, Python, AI, ML.
-        REJECT: NGO, Fundraising, Sales, Campus Ambassador.
+        Evaluate these job/internship opportunities from Internshala.
+        
+        CRITICAL SKILLS (High Priority): 
+        - Full Stack Development (MERN Stack, Next.js, React, Node.js)
+        - Artificial Intelligence (AI), Machine Learning (ML), Deep Learning
+        - Data Science, Data Analytics
+        
+        BLOCKLIST (Always Reject these companies):
+        - Symonis, Tripple One Solutions, CareerNest, Alphabt, CloudZapier, Basti Ki Pathshala Foundation, Emoolar Technology Private Limited, Pawzz Foundation, JP IT STAFFING LLC, Medius Technologies Private Limited.
+
+        REJECT (Strictly skip these):
+        - ALL INTERNSHIPS (The user already has one).
+        - Any role where the type is "Internship".
+        - Any company in the BLOCKLIST.
+        - NGO, Fundraising, Social Media Marketing, Sales, Business Development, Campus Ambassador.
+        - Roles that are purely non-technical or involve door-to-door activities.
+        - "Software Development" roles that don't mention any modern tech stack.
 
         Input JSON:
         ${JSON.stringify(limitedJobs)}
 
         Output Format (STRICT JSON):
-        Return an array: [{ "id": "...", "title": "...", "company": "...", "applyLink": "...", "reason": "..." }]
-        Ensure you use "applyLink" exactly as provided in the input.
-        If none match, return [].
+        Return an array: [{ "id": "...", "title": "...", "company": "...", "applyLink": "...", "type": "...", "salary": "...", "jobOffer": "...", "relevanceReason": "..." }]
+        - Use "relevanceReason" to briefly explain why it matches (e.g., "MERN Stack opportunity" or "AI/ML role").
+        - If none match, return [].
     `;
 
     try {
@@ -41,10 +55,13 @@ async function filterJobs(jobs) {
             const jsonMatch = content.match(/\[[\s\S]*\]/);
             if (jsonMatch) {
                 const filtered = JSON.parse(jsonMatch[0]);
-                // Ensure all items have applyLink
+                // Ensure all items have necessary fields
                 return filtered.map(job => ({
                     ...job,
-                    applyLink: job.applyLink || job.link || "" 
+                    applyLink: job.applyLink || job.link || "",
+                    type: job.type || "Internship/Job",
+                    salary: job.salary || "Not Disclosed",
+                    jobOffer: job.jobOffer || ""
                 })).filter(job => job.applyLink);
             }
         } catch (e) {

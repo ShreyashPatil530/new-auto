@@ -17,7 +17,7 @@ async function fetchJobs(urls) {
 
             const $ = cheerio.load(response.data);
 
-            $('.individual_internship').each((index, element) => {
+            $('.individual_internship, .individual_job').each((index, element) => {
                 const titleElement = $(element).find('.job-title-href');
                 const relativeLink = titleElement.attr('href');
                 
@@ -26,6 +26,18 @@ async function fetchJobs(urls) {
                     const company = $(element).find('.company-name').first().text().trim() || "Unknown Company";
                     const applyLink = `https://internshala.com${relativeLink}`;
                     
+                    // Extra Details
+                    const isJob = $(element).hasClass('individual_job');
+                    const type = isJob ? "Full-time Job" : "Internship";
+                    
+                    // Extract Salary/Stipend
+                    let salary = $(element).find('.stipend, .salary').find('.item_body').first().text().trim();
+                    salary = salary || "Not Disclosed";
+
+                    // Extract Job Offer Details
+                    const hasJobOffer = $(element).find('.job_offer_details').length > 0;
+                    const jobOfferText = hasJobOffer ? "✅ Job Offer Post-Internship" : "";
+
                     // Robust Job ID Extraction
                     const jobId = relativeLink.split('/').filter(p => p).pop() || Math.random().toString(36).substr(5);
 
@@ -35,7 +47,10 @@ async function fetchJobs(urls) {
                             id: jobId,
                             title,
                             company,
-                            applyLink
+                            applyLink,
+                            type,
+                            salary,
+                            jobOffer: jobOfferText
                         });
                     }
                 }

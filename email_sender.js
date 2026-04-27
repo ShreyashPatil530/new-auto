@@ -19,14 +19,27 @@ async function sendEmail(jobs) {
         return;
     }
 
-    const jobRows = jobs.map(job => `
-        <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: sans-serif;">
-            <h3 style="margin: 0 0 10px 0; color: #1a73e8;">${job.title}</h3>
-            <p style="margin: 0 0 5px 0;"><strong>Company:</strong> ${job.company}</p>
-            <p style="margin: 0 0 10px 0; font-size: 0.9em; color: #555;"><i>Reason:</i> ${job.relevanceReason || 'Highly relevant skill match'}</p>
-            <a href="${job.applyLink || job.link || '#'}" style="display: inline-block; padding: 10px 20px; color: white; background-color: #1a73e8; text-decoration: none; border-radius: 5px; font-weight: bold;">Apply Now</a>
+    const jobRows = jobs.map(job => {
+        const isJob = job.type && job.type.includes("Job");
+        const badgeColor = isJob ? "#28a745" : "#17a2b8";
+        
+        return `
+        <div style="margin-bottom: 20px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 12px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                <span style="display: inline-block; padding: 4px 12px; font-size: 11px; font-weight: bold; color: white; background-color: ${badgeColor}; border-radius: 50px; text-transform: uppercase;">${job.type || 'Opportunity'}</span>
+                ${job.jobOffer ? `<span style="font-size: 11px; font-weight: bold; color: #f39c12;">${job.jobOffer}</span>` : ''}
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: #1a73e8; font-size: 18px;">${job.title}</h3>
+            <p style="margin: 0 0 12px 0; font-weight: 600; color: #333;">🏢 ${job.company}</p>
+            
+            <div style="background-color: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                <p style="margin: 0 0 5px 0; color: #666; font-size: 13px;"><strong>💰 Salary/Stipend:</strong> ${job.salary || 'Not Disclosed'}</p>
+                <p style="margin: 0; color: #666; font-size: 13px;"><strong>🎯 Why matched:</strong> ${job.relevanceReason || 'Matches your target tech stack'}</p>
+            </div>
+            
+            <a href="${job.applyLink || job.link || '#'}" style="display: block; text-align: center; padding: 12px; color: white; background-color: #1a73e8; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; transition: background-color 0.3s;">View and Apply</a>
         </div>
-    `).join("");
+    `}).join("");
 
     const mailOptions = {
         from: `"Job Alert System" <${process.env.EMAIL_USER}>`,
