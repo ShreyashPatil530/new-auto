@@ -7,6 +7,15 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
+// Validate environment variables
+const REQUIRED_ENV = ['GROQ_API_KEY', 'EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_USER', 'EMAIL_PASS', 'RECIPIENT_EMAIL'];
+const missingEnv = REQUIRED_ENV.filter(key => !process.env[key]);
+if (missingEnv.length > 0) {
+    console.error(`❌ CRITICAL ERROR: Missing environment variables: ${missingEnv.join(', ')}`);
+    console.error("Please check your .env file or GitHub Secrets.");
+    process.exit(1);
+}
+
 const TECHNICAL_URLS = [
     'https://internshala.com/jobs/full-stack-development-jobs/',
     'https://internshala.com/jobs/web-development-jobs/',
@@ -65,13 +74,14 @@ async function runJobSearch() {
         // Step 4: Email Sending
         if (filteredJobs.length > 0) {
             await sendEmail(filteredJobs);
-            console.log('- Sent email successfully.');
-            
-            // Mark as sent
-            saveSentJobs(filteredJobs.map(job => job.id));
+            console.log('✅ Sent email successfully.');
         } else {
-            console.log('- No highly relevant jobs according to AI.');
+            console.log('ℹ️ No highly relevant jobs according to AI in this batch.');
         }
+
+        // Step 5: Mark ALL fresh jobs as processed (so we don't re-filter them next hour)
+        saveSentJobs(freshJobs.map(job => job.id));
+        console.log(`- Marked ${freshJobs.length} jobs as processed.`);
 
     } catch (error) {
         console.error('CRITICAL ERROR:', error.message);

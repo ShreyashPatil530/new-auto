@@ -16,20 +16,23 @@ async function filterJobs(jobs) {
         Evaluate these job/internship opportunities from Internshala.
         
         CRITICAL SKILLS (High Priority): 
-        - Full Stack Development (MERN Stack, Next.js, React, Node.js)
+        - Full Stack Development (MERN Stack, Next.js, React, Node.js, Python, Django)
         - Artificial Intelligence (AI), Machine Learning (ML), Deep Learning
         - Data Science, Data Analytics
+        - Software Development (Technical roles)
         
         BLOCKLIST (Always Reject these companies):
         - Symonis, Tripple One Solutions, CareerNest, Alphabt, CloudZapier, Basti Ki Pathshala Foundation, Emoolar Technology Private Limited, Pawzz Foundation, JP IT STAFFING LLC, Medius Technologies Private Limited.
 
         REJECT (Strictly skip these):
-        - ALL INTERNSHIPS (The user already has one).
-        - Any role where the type is "Internship".
-        - Any company in the BLOCKLIST.
         - NGO, Fundraising, Social Media Marketing, Sales, Business Development, Campus Ambassador.
         - Roles that are purely non-technical or involve door-to-door activities.
         - "Software Development" roles that don't mention any modern tech stack.
+        - Any company in the BLOCKLIST.
+
+        ACCEPT:
+        - Both Internships and Full-time Jobs that match the technical skills.
+        - Roles that offer a "Job Offer Post-Internship" are highly preferred.
 
         Input JSON:
         ${JSON.stringify(limitedJobs)}

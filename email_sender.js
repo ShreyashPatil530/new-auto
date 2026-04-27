@@ -42,27 +42,57 @@ async function sendEmail(jobs) {
     `}).join("");
 
     const mailOptions = {
-        from: `"Job Alert System" <${process.env.EMAIL_USER}>`,
+        from: `"🚀 Job Alert System" <${process.env.EMAIL_USER}>`,
         to: process.env.RECIPIENT_EMAIL,
-        subject: `Latest Internshala Jobs - ${new Date().toLocaleDateString()}`,
+        subject: `🎯 New Job Opportunities - ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`,
         html: `
-            <div style="max-width: 600px; margin: auto; padding: 20px; background-color: #f9f9f9; border: 1px solid #eee;">
-                <h2 style="text-align: center; color: #333;">New Career Opportunities Matched!</h2>
-                <p style="text-align: center; color: #666;">Hey! We've found the following high-relevance jobs/internships for you:</p>
-                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-                ${jobRows}
-                <p style="font-size: 0.8em; color: #888; text-align: center; margin-top: 30px;">
-                    This is an automated alert. System runs every hour.
-                </p>
-            </div>
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #f4f7f9; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                <div style="max-width: 650px; margin: 40px auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid #e1e8ed;">
+                    <!-- Header -->
+                    <div style="background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%); padding: 40px 20px; text-align: center; color: white;">
+                        <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">New Matches Found! 🚀</h1>
+                        <p style="margin: 10px 0 0 0; opacity: 0.9; font-size: 16px;">We've analyzed the latest listings to find the best fits for your career.</p>
+                    </div>
+
+                    <!-- Content -->
+                    <div style="padding: 30px;">
+                        <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">
+                            Hey Shreyash! We found <strong>${jobs.length}</strong> high-relevance opportunities that match your technical profile.
+                        </p>
+                        
+                        ${jobRows}
+
+                        <!-- Footer -->
+                        <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #edf2f7; text-align: center;">
+                            <p style="font-size: 13px; color: #718096; margin-bottom: 8px;">
+                                🤖 This is an automated alert from your Job Automation System.
+                            </p>
+                            <p style="font-size: 12px; color: #a0aec0; margin: 0;">
+                                System checks Internshala every hour for Full Stack, AI, and ML roles.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </body>
+            </html>
         `,
     };
 
     try {
+        // Verify connection before sending
+        await transporter.verify();
         const info = await transporter.sendMail(mailOptions);
-        console.log("Email sent successfully: ", info.messageId);
+        console.log("✅ Email sent successfully: ", info.messageId);
     } catch (error) {
-        console.error("Error sending email:", error.message);
+        console.error("❌ Error sending email:", error.message);
+        if (error.code === 'EAUTH') {
+            console.error("Auth Error: Check if your App Password is correct.");
+        }
         throw error;
     }
 }
