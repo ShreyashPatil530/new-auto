@@ -1,117 +1,106 @@
 const cron = require('node-cron');
-const { fetchJobs } = require('./scraper');
+const { fetchAllJobs } = require('./scraper');
 const { filterJobs } = require('./ai_filter');
 const { sendEmail } = require('./email_sender');
-const { filterSentJobs, saveSentJobs } = require('./storage');
+const { initStorage, filterSentJobs, saveSentJobs } = require('./storage');
 const dotenv = require('dotenv');
 
 dotenv.config();
 
-// Validate environment variables
-const REQUIRED_ENV = ['GROQ_API_KEY', 'EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_USER', 'EMAIL_PASS', 'RECIPIENT_EMAIL'];
-const missingEnv = REQUIRED_ENV.filter(key => !process.env[key]);
-if (missingEnv.length > 0) {
-    console.error(`❌ CRITICAL ERROR: Missing environment variables: ${missingEnv.join(', ')}`);
-    console.error("Please check your .env file or GitHub Secrets.");
-    process.exit(1);
-}
-
+// Internshala URLs (HTML scraping works fine here)
 const TECHNICAL_URLS = [
+    // MERN / Full Stack
+    'https://internshala.com/internships/work-from-home-full-stack-development-internships/',
+    'https://internshala.com/internships/work-from-home-web-development-internships/',
+    'https://internshala.com/internships/work-from-home-javascript-development-internships/',
+    'https://internshala.com/internships/work-from-home-reactjs-internships/',
+    'https://internshala.com/internships/work-from-home-nodejs-internships/',
+    // AI / ML
+    'https://internshala.com/internships/work-from-home-artificial-intelligence-internships/',
+    'https://internshala.com/internships/work-from-home-machine-learning-internships/',
+    'https://internshala.com/internships/work-from-home-data-science-internships/',
+    // Python / Backend
+    'https://internshala.com/internships/work-from-home-python-django-internships/',
+    'https://internshala.com/internships/work-from-home-computer-science-internships/',
+    // Fresher Jobs
     'https://internshala.com/jobs/full-stack-development-jobs/',
     'https://internshala.com/jobs/web-development-jobs/',
+    'https://internshala.com/jobs/python-development-jobs/',
     'https://internshala.com/jobs/node-js-development-jobs/',
-    'https://internshala.com/jobs/python-django-jobs/',
+    'https://internshala.com/jobs/reactjs-jobs/',
+    'https://internshala.com/jobs/artificial-intelligence-jobs/',
     'https://internshala.com/jobs/machine-learning-jobs/',
-    'https://internshala.com/jobs/data-science-jobs/',
-    'https://internshala.com/jobs/artificial-intelligence-ai-jobs/',
-    'https://internshala.com/jobs/software-development-jobs/',
-    'https://internshala.com/jobs/java-development-jobs/',
-    'https://internshala.com/jobs/computer-science-jobs/'
-];
-
-const COMPANY_BLOCKLIST = [
-    'Symonis', 'Tripple One Solutions', 'CareerNest', 'Alphabt', 'CloudZapier', 
-    'Basti Ki Pathshala Foundation', 'Emoolar Technology Private Limited', 
-    'Pawzz Foundation', 'JP IT STAFFING LLC', 'Medius Technologies Private Limited'
 ];
 
 async function runJobSearch() {
-    console.log(`[${new Date().toLocaleString()}] Starting job search...`);
-    
+    const startTime = Date.now();
+    console.log(`\n🚀 [${new Date().toLocaleString()}] INITIATING ADVANCED JOB SEARCH CYCLE`);
+    console.log(`────────────────────────────────────────────────────────────`);
+
+    let stats = { scraped: 0, new: 0, relevant: 0, failed: false };
+
     try {
-        // Step 1: Fetch Latest Jobs from Multiple Categories
-        const allJobs = await fetchJobs(TECHNICAL_URLS);
-        console.log(`- Scraped ${allJobs.length} potential technical jobs.`);
+        // Step 0: Connect to DB
+        await initStorage();
 
-        // Step 2: Handle Duplicates & Blocklist
-        let freshJobs = filterSentJobs(allJobs);
-        
-        // Apply Company Blocklist
-        const beforeBlockCount = freshJobs.length;
-        freshJobs = freshJobs.filter(job => 
-            !COMPANY_BLOCKLIST.some(blocked => 
-                job.company.toLowerCase().includes(blocked.toLowerCase())
-            )
-        );
-        const blockedCount = beforeBlockCount - freshJobs.length;
+        // Step 1: Fetch from all sources
+        const allJobs = await fetchAllJobs({
+            internshalaUrls: TECHNICAL_URLS,
+        });
+        stats.scraped = allJobs.length;
 
-        if (blockedCount > 0) {
-            console.log(`- Removed ${blockedCount} jobs from blocked companies.`);
-        }
-
-        console.log(`- Found ${freshJobs.length} new jobs to process.`);
+        // Step 2: Filter already-sent jobs
+        const freshJobs = await filterSentJobs(allJobs);
+        stats.new = freshJobs.length;
 
         if (freshJobs.length === 0) {
-            console.log('No new jobs found. Skipping AI filtering and email.');
-            return;
+            console.log('✅ Cycle Skip: No new job postings detected since last run.');
+            return stats;
         }
 
-        // Step 3: AI Filtering
-        console.log('- Running AI relevance check...');
+        // Step 3: AI Relevance Filter
+        console.log(`- Analysis: Running AI on ${freshJobs.length} new opportunities...`);
         const filteredJobs = await filterJobs(freshJobs);
-        console.log(`- AI selected ${filteredJobs.length} relevant opportunities.`);
+        stats.relevant = filteredJobs.length;
 
-        // Step 4: Email Sending
+        // Step 4: Notify + Archive
         if (filteredJobs.length > 0) {
+            console.log(`🎯 Found ${filteredJobs.length} HIGH-RELEVANCE matches!`);
             await sendEmail(filteredJobs);
-            console.log('✅ Sent email successfully.');
+            console.log('✅ Notifications: Email delivered.');
+            await saveSentJobs(filteredJobs);
         } else {
-            console.log('ℹ️ No highly relevant jobs according to AI in this batch.');
+            console.log('⚖️ No jobs met the AI relevance threshold this cycle.');
         }
-
-        // Step 5: Mark ALL fresh jobs as processed (so we don't re-filter them next hour)
-        saveSentJobs(freshJobs.map(job => job.id));
-        console.log(`- Marked ${freshJobs.length} jobs as processed.`);
 
     } catch (error) {
-        console.error('CRITICAL ERROR:', error.message);
-        console.error(error.stack);
-        throw error; // Re-throw so GitHub Actions actually catches the failure
+        console.error('❌ CRITICAL ENGINE FAILURE:', error.message);
+        stats.failed = true;
+        throw error;
+    } finally {
+        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+        console.log(`────────────────────────────────────────────────────────────`);
+        console.log(`🏁 CYCLE COMPLETE IN ${duration}s | Scraped: ${stats.scraped} | New: ${stats.new} | Relevant: ${stats.relevant}`);
+        console.log(`────────────────────────────────────────────────────────────\n`);
     }
-    
-    console.log(`[${new Date().toLocaleString()}] Cycle complete.\n`);
+
+    return stats;
 }
 
-// Run system
+// System Entry
 (async () => {
-    // Check if --single-run flag is present (useful for GitHub Actions)
     const isSingleRun = process.argv.includes('--single-run');
 
     if (isSingleRun) {
-        console.log('--- Job Automation Service (SINGLE RUN MODE) ---');
-        await runJobSearch();
+        console.log('--- ADVANCED JOB SERVICE (CLOUD MODE) ---');
+        await runJobSearch().catch(() => process.exit(1));
         process.exit(0);
     } else {
-        console.log('--- Job Automation System (CONTINUOUS MODE) ---');
-        console.log(`Tracking ${TECHNICAL_URLS.length} categories.`);
-        console.log('Frequency: Every 1 hour');
-        
-        // Run immediately once on start
-        await runJobSearch().catch(err => console.error('Initial run failed:', err.message));
+        console.log('--- ADVANCED JOB SERVICE (SERVER MODE) ---');
+        console.log(`Active Internshala Categories: ${TECHNICAL_URLS.length}`);
+        console.log('Interval: Hourly');
 
-        // Schedule every 1 hour (0 minutes past every hour)
-        cron.schedule('0 * * * *', () => {
-            runJobSearch();
-        });
+        await runJobSearch().catch(err => console.error('Initial cycle crashed:', err.message));
+        cron.schedule('0 * * * *', runJobSearch);
     }
 })();

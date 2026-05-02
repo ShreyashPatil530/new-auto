@@ -1,47 +1,76 @@
 # .github/workflows/job-alert.yml
-name: Job Alert System
+name: 🚀 Advanced Job Alert System
 
 on:
   schedule:
-    - cron: '0 * * * *' # Run every 1 hour
+    - cron: '30 * * * *' # Run at half-past every hour
   workflow_dispatch: # Manual trigger
 
+concurrency:
+  group: job-search
+  cancel-in-progress: true
+
 jobs:
-  run-job-search:
+  automation:
+    name: Run Job Search Engine
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
+    - name: 🟢 Setup Node.js Runtime
+      uses: actions/setup-node@v4
       with:
         node-version: '20'
+        cache: 'npm'
 
-    - name: Install dependencies
-      run: npm install
+    - name: 📦 Install Dependencies
+      run: npm ci || npm install
 
-    - name: Run Job Search
+    - name: 🔒 Validate Secrets
+      run: |
+        if [ -z "${{ secrets.GROQ_API_KEY }}" ]; then echo "❌ GROQ_API_KEY is missing"; exit 1; fi
+        if [ -z "${{ secrets.RECIPIENT_EMAIL }}" ]; then echo "❌ RECIPIENT_EMAIL is missing"; exit 1; fi
+        if [ -z "${{ secrets.EMAIL_USER }}" ]; then echo "❌ EMAIL_USER is missing"; exit 1; fi
+        if [ -z "${{ secrets.EMAIL_PASS }}" ]; then echo "❌ EMAIL_PASS is missing"; exit 1; fi
+        echo "✅ All required secrets validated."
+
+    - name: 🛰️ Execute Search Engine
       env:
-        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        AGENT_ROUTER_API_KEY: ${{ secrets.AGENT_ROUTER_API_KEY }}
+        AGENT_ROUTER_BASE_URL: ${{ secrets.AGENT_ROUTER_BASE_URL }}
         EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
         EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
         EMAIL_USER: ${{ secrets.EMAIL_USER }}
         EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
         RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
-        INTERNSHALA_WFH_URL: https://internshala.com/internships/work-from-home-internships/
+        MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        SERVER_URL: ${{ secrets.SERVER_URL }}
       run: node index.js --single-run
 
-    - name: Commit and push sent_jobs.json
+
+
+    - name: 💾 Sync Job History
+      if: always()
       run: |
-        git config --global user.name "GitHub Action"
-        git config --global user.email "action@github.com"
+        git config --global user.name "Automation Bot"
+        git config --global user.email "bot@github.com"
         git add sent_jobs.json
-        git commit -m "chore: update sent jobs log [skip ci]" || echo "No changes to commit"
-        git push
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if git commit -m "sync: update internship tracking log [skip ci]"; then
+          git push origin main
+          echo "✅ History synced to repository."
+        else
+          echo "ℹ️ No new jobs found to sync."
+        fi
+
+    - name: 📝 Final Report
+      if: success()
+      run: echo "### 🏁 Job Search Completed Successfully! Check your Telegram/Email for matches." >> $GITHUB_STEP_SUMMARY
+

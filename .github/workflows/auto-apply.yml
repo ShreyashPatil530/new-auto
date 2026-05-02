@@ -1,0 +1,59 @@
+# .github/workflows/auto-apply.yml
+name: 🤖 Auto Apply to Job
+
+on:
+  workflow_dispatch:
+    inputs:
+      jobId:
+        description: 'Job ID'
+        required: true
+      applyLink:
+        description: 'Internshala job URL'
+        required: true
+      title:
+        description: 'Job title'
+        required: true
+      company:
+        description: 'Company name'
+        required: true
+
+jobs:
+  apply:
+    name: Apply via Puppeteer
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: 📦 Install Dependencies
+      run: npm ci || npm install
+
+    - name: 🌐 Install Chromium for Puppeteer
+      run: npx puppeteer browsers install chrome
+
+    - name: 🤖 Run Auto Apply
+      env:
+        GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        INTERNSHALA_EMAIL: ${{ secrets.INTERNSHALA_EMAIL }}
+        INTERNSHALA_PASSWORD: ${{ secrets.INTERNSHALA_PASSWORD }}
+        EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+        EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
+        EMAIL_USER: ${{ secrets.EMAIL_USER }}
+        EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+        RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+        JOB_ID: ${{ inputs.jobId }}
+        APPLY_LINK: ${{ inputs.applyLink }}
+        JOB_TITLE: ${{ inputs.title }}
+        COMPANY: ${{ inputs.company }}
+      run: node run_apply.js
+
+    - name: 📝 Report
+      if: always()
+      run: echo "### 🤖 Auto-Apply Done! Check your email for confirmation." >> $GITHUB_STEP_SUMMARY
