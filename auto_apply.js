@@ -97,25 +97,43 @@ async function autoApply(job) {
 // ─────────────────────────────────────────────────────────────────────────────
 async function loginToInternshala(page) {
     try {
+        // Strategy 1: Use saved cookies (bypasses IP detection)
+        if (process.env.INTERNSHALA_COOKIES) {
+            console.log('  → Using saved cookies...');
+            try {
+                const cookies = JSON.parse(process.env.INTERNSHALA_COOKIES);
+                await page.goto('https://internshala.com', { waitUntil: 'networkidle2', timeout: 20000 });
+                await page.setCookie(...cookies);
+                await page.goto('https://internshala.com/student/dashboard', { waitUntil: 'networkidle2', timeout: 20000 });
+                await delay(1500);
+                const url = page.url();
+                const isLoggedIn = !url.includes('/login');
+                console.log(`  ${isLoggedIn ? '✅ Cookie login successful' : '❌ Cookies expired'}`);
+                if (isLoggedIn) return true;
+                console.log('  → Cookies expired, trying password login...');
+            } catch (e) {
+                console.warn('  ! Cookie login failed:', e.message);
+            }
+        }
+
+        // Strategy 2: Password login
+        console.log('  → Trying password login...');
         await page.goto('https://internshala.com/login/student', {
             waitUntil: 'networkidle2',
             timeout: 20000,
         });
         await delay(1500);
 
-        // Fill email
         const emailField = await page.$('#email, input[name="email"], input[type="email"]');
         if (!emailField) return false;
         await emailField.click({ clickCount: 3 });
         await emailField.type(process.env.INTERNSHALA_EMAIL, { delay: 60 });
 
-        // Fill password
         const passField = await page.$('#password, input[name="password"], input[type="password"]');
         if (!passField) return false;
         await passField.click({ clickCount: 3 });
         await passField.type(process.env.INTERNSHALA_PASSWORD, { delay: 60 });
 
-        // Submit login
         const loginBtn = await page.$('#login_submit, button[type="submit"], .login-btn');
         if (loginBtn) {
             await loginBtn.click();
@@ -129,9 +147,7 @@ async function loginToInternshala(page) {
         const currentUrl = page.url();
         const isLoggedIn = !currentUrl.includes('/login');
         console.log(`  ${isLoggedIn ? '✅ Login successful' : '❌ Still on login page'}`);
-        console.log(`  Current URL: ${currentUrl}`);
 
-        // Save screenshot for debugging
         await page.screenshot({ path: 'login_debug.png', fullPage: false });
         console.log('  📸 Screenshot saved: login_debug.png');
 
