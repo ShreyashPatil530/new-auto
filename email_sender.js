@@ -99,7 +99,7 @@ async function sendEmail(jobs) {
                    style="display:inline-block; padding:10px 22px; color:${typeColor}; background:#fff; border:2px solid ${typeColor}; text-decoration:none; border-radius:6px; font-weight:700; font-size:0.85em;">
                     View Job →
                 </a>
-                ${job.source === 'Internshala' ? `
+                ${job.source === 'Internshala' && process.env.SERVER_URL ? `
                 <a href="${process.env.SERVER_URL}/apply?jobId=${encodeURIComponent(job.id)}&applyLink=${encodeURIComponent(job.applyLink)}&title=${encodeURIComponent(job.title)}&company=${encodeURIComponent(job.company)}"
                    style="display:inline-block; padding:10px 22px; color:#fff; background:#e74c3c; text-decoration:none; border-radius:6px; font-weight:700; font-size:0.85em;">
                     🤖 Auto Apply

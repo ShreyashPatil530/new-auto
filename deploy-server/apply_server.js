@@ -6,17 +6,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-const GITHUB_REPO = process.env.GITHUB_REPO; // e.g. "ShreyashPatil530/new-auto"
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN; // Personal Access Token (workflow scope)
+const GITHUB_REPO = process.env.GITHUB_REPO;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
-// Prevent double-trigger for same job
 const triggering = new Set();
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GET /apply?jobId=xxx&applyLink=yyy&title=zzz&company=aaa
-// Triggered when user clicks "Auto Apply" button in email
-// Triggers GitHub Actions workflow_dispatch — Puppeteer runs on GitHub, not here
-// ─────────────────────────────────────────────────────────────────────────────
 app.get('/apply', async (req, res) => {
     const { jobId, applyLink, title, company } = req.query;
 
@@ -35,14 +29,12 @@ app.get('/apply', async (req, res) => {
         ));
     }
 
-    // Respond immediately — don't make user wait
     res.send(htmlPage(
         '🚀 Auto-Apply Triggered!',
         `GitHub Actions is now filling the application for <strong>${title}</strong> at <strong>${company}</strong>.<br/><br/>
         You'll receive a <strong>confirmation email</strong> once done. You can close this tab.`
     ));
 
-    // Trigger GitHub Actions workflow_dispatch in background
     triggering.add(jobId);
     try {
         await axios.post(
@@ -59,26 +51,20 @@ app.get('/apply', async (req, res) => {
                 }
             }
         );
-        console.log(`✅ GitHub Actions triggered for: "${title}" @ ${company}`);
+        console.log(`✅ GitHub Actions triggered: "${title}" @ ${company}`);
     } catch (err) {
         console.error('❌ Failed to trigger GitHub Actions:', err.response?.data || err.message);
     } finally {
-        // Clear after 2 min to allow re-trigger if needed
         setTimeout(() => triggering.delete(jobId), 2 * 60 * 1000);
     }
 });
 
-// Health check
 app.get('/health', (_, res) => res.send('OK'));
 
 app.listen(PORT, () => {
-    console.log(`🚀 Apply server running → http://localhost:${PORT}`);
-    console.log(`   Repo: ${GITHUB_REPO || '⚠️ GITHUB_REPO not set'}`);
+    console.log(`🚀 Apply server running on port ${PORT}`);
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Simple HTML response page
-// ─────────────────────────────────────────────────────────────────────────────
 function htmlPage(heading, body) {
     return `<!DOCTYPE html>
 <html>
