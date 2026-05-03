@@ -129,6 +129,12 @@ async function loginToInternshala(page) {
         const currentUrl = page.url();
         const isLoggedIn = !currentUrl.includes('/login');
         console.log(`  ${isLoggedIn ? '✅ Login successful' : '❌ Still on login page'}`);
+        console.log(`  Current URL: ${currentUrl}`);
+
+        // Save screenshot for debugging
+        await page.screenshot({ path: 'login_debug.png', fullPage: false });
+        console.log('  📸 Screenshot saved: login_debug.png');
+
         return isLoggedIn;
 
     } catch (e) {

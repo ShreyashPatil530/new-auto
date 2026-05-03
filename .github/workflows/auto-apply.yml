@@ -54,6 +54,14 @@ jobs:
         COMPANY: ${{ inputs.company }}
       run: node run_apply.js
 
+    - name: 📸 Upload Debug Screenshot
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: login-debug-screenshot
+        path: login_debug.png
+        if-no-files-found: ignore
+
     - name: 📝 Report
       if: always()
       run: echo "### 🤖 Auto-Apply Done! Check your email for confirmation." >> $GITHUB_STEP_SUMMARY
