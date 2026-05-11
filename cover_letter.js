@@ -177,6 +177,30 @@ function defaultAnswer(question, type = 'fullstack') {
     if (q.includes('node') || q.includes('backend') || q.includes('express'))
         return 'Yes, I work with Node.js and Express.js daily in my current internship, building RESTful APIs, JWT authentication systems, and MongoDB-backed backends for production applications.';
 
+    if (q.includes('hour') || q.includes('time') || q.includes('devote') || q.includes('10 am') || q.includes('10am') || q.includes('7 pm') || q.includes('7pm') || q.includes('shift'))
+        return 'I can devote 9+ hours per day and working from 10 am to 7 pm suits me perfectly. I am fully available and committed to this internship as my primary focus right now.';
+
+    if (q.includes('macbook') || q.includes('mac') || q.includes('laptop') || q.includes('system') || q.includes('device'))
+        return 'I have a reliable Windows laptop with stable high-speed internet. I use VS Code and have been working remotely in my current internship without any issues.';
+
+    if (q.includes('golang') || q.includes('go lang') || q.includes(' go ') || q.includes('fiber') || q.includes('gin '))
+        return 'I have not worked with Golang professionally, but I have strong backend fundamentals with Node.js, Express.js, and REST APIs. I am a fast learner and can pick up Golang quickly given my experience with typed languages like TypeScript.';
+
+    if (q.includes('java ') || q.includes('spring') || q.includes('kotlin'))
+        return 'I have not worked with Java/Spring in production, but I have strong OOP fundamentals and hands-on experience with Node.js, TypeScript, and REST API design. I adapt to new backend stacks quickly.';
+
+    if (q.includes('php') || q.includes('laravel') || q.includes('wordpress'))
+        return 'I primarily work with the MERN Stack, but I have worked with HTML/CSS/JavaScript-based CMS projects. I can adapt to PHP-based stacks given my strong web development fundamentals.';
+
+    if (q.includes('flutter') || q.includes('mobile') || q.includes('android') || q.includes('ios') || q.includes('react native'))
+        return 'I have explored Flutter and React Native basics. My primary expertise is in full-stack web development (MERN Stack, Next.js), and I am comfortable learning mobile development frameworks quickly.';
+
+    if (q.includes('currently') && (q.includes('work') || q.includes('intern') || q.includes('employ')))
+        return 'I am currently interning as a MERN Stack Developer at MAYASABHAXR Technologies (Dec 2025 – Present), where I build scalable full-stack applications. I am a final-year B.Tech CSE student graduating in May 2026.';
+
+    if (q.includes('salary') || q.includes('stipend') || q.includes('expect') || q.includes('ctc'))
+        return 'I am open to the stipend/salary offered for this role. My primary focus is gaining hands-on experience and contributing to a real product. I am flexible and happy to discuss.';
+
     if (type === 'aiagent')
         return 'Yes, I can handle this effectively. I have built production AI agent systems with CrewAI, LangGraph, RAG, and browser-use automation, and I am comfortable with the full LLM stack from prompt engineering to deployment.';
     if (type === 'data')
