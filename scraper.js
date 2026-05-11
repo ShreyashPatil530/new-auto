@@ -3,8 +3,28 @@ const cheerio = require('cheerio');
 
 // 🚫 BLOCKLIST
 const BLOCKED_COMPANIES = [
-    'Symonis', 'Across The Globe (ATG)', 'Emoolar Technology Private Limited',
-    'Neurasys', 'Basti Ki Pathshala Foundation', 'Jarurat Care', 'Tripple One Solutions'
+    'Symonis',
+    'Across The Globe (ATG)',
+    'Emoolar Technology Private Limited',
+    'Neurasys',
+    'Basti Ki Pathshala Foundation',
+    'Jarurat Care',
+    'Tripple One Solutions',
+    'NayePankh Foundation',
+    'Maxgen Technologies',
+    'SKIDEV EDUTECH',
+    'Meru Technosoft',
+    'CareerNest',
+    'She Can Foundation',
+    'TSTEPS',
+    'Global InfoCloud',
+    'CipherSchools',
+    'Ozibook Tech Solutions',
+    'Medius Technologies',
+    'CloudZapier',
+    'Primetrade.ai',
+    'International Institute Of SDGs',
+    'DeepThought CultureTech',
 ];
 
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
@@ -16,58 +36,72 @@ function isBlocked(company = '') {
 // ─────────────────────────────────────────────────────────────────────────────
 // SOURCE 1: INTERNSHALA (HTML scraping — works perfectly)
 // ─────────────────────────────────────────────────────────────────────────────
+async function scrapeInternshalaPage(url, type) {
+    const response = await axios.get(url, {
+        timeout: 15000,
+        headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-IN,en;q=0.9',
+        }
+    });
+
+    const $ = cheerio.load(response.data);
+    const pageJobs = [];
+
+    $('.individual_internship').each((_, element) => {
+        const titleElement = $(element).find('.job-title-href');
+        const relativeLink = titleElement.attr('href');
+        const company = $(element).find('.company-name').first().text().trim() || 'Unknown Company';
+
+        if (!titleElement.length || !relativeLink || isBlocked(company)) return;
+
+        const title = titleElement.text().trim() || 'Internship';
+        const applyLink = `https://internshala.com${relativeLink}`;
+        let stipend = $(element).find('.stipend').text().trim();
+        if (!stipend) stipend = $(element).find('.desktop').text().trim() || 'Competitive';
+        const location = $(element).find('.location_link').text().trim()
+            || $(element).find('.locations').text().trim()
+            || 'Work From Home';
+        const duration = $(element).find('.status-container').next().text().replace('Duration', '').trim() || 'N/A';
+        const startDate = $(element).find('.start_date_container').find('.item_body').text().trim() || 'Immediate';
+        const jobId = relativeLink.split('/').filter(p => p).pop() || Math.random().toString(36).substr(5);
+
+        pageJobs.push({
+            id: `internshala-${jobId}`,
+            title,
+            company,
+            applyLink,
+            stipend,
+            location,
+            duration,
+            startDate,
+            type,
+            source: 'Internshala',
+            sourceUrl: url
+        });
+    });
+
+    return pageJobs;
+}
+
 async function fetchJobs(urls) {
-    console.log(`- Scraping ${urls.length} Internshala categories in parallel...`);
+    console.log(`- Scraping ${urls.length} Internshala categories (page 1 + 2) in parallel...`);
 
-    const promises = urls.map(async (url) => {
+    const promises = urls.map(async (baseUrl) => {
+        const type = baseUrl.includes('/jobs/') ? 'Fresher Job' : 'Internship';
+        const slug = baseUrl.split('/').filter(Boolean).pop();
         try {
-            const response = await axios.get(url, {
-                timeout: 12000,
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                    'Accept-Language': 'en-IN,en;q=0.9',
-                }
-            });
-
-            const $ = cheerio.load(response.data);
-            const pageJobs = [];
-
-            $('.individual_internship').each((_, element) => {
-                const titleElement = $(element).find('.job-title-href');
-                const relativeLink = titleElement.attr('href');
-                const company = $(element).find('.company-name').first().text().trim() || 'Unknown Company';
-
-                if (titleElement.length > 0 && relativeLink && !isBlocked(company)) {
-                    const title = titleElement.text().trim() || 'Internship';
-                    const applyLink = `https://internshala.com${relativeLink}`;
-                    let stipend = $(element).find('.stipend').text().trim();
-                    if (!stipend) stipend = $(element).find('.desktop').text().trim() || 'Competitive';
-                    const location = $(element).find('.location_link').text().trim() || 'Work From Home';
-                    const duration = $(element).find('.status-container').next().text().replace('Duration', '').trim() || 'N/A';
-                    const startDate = $(element).find('.start_date_container').find('.item_body').text().trim() || 'Immediate';
-                    const jobId = relativeLink.split('/').filter(p => p).pop() || Math.random().toString(36).substr(5);
-
-                    pageJobs.push({
-                        id: `internshala-${jobId}`,
-                        title,
-                        company,
-                        applyLink,
-                        stipend,
-                        location,
-                        duration,
-                        startDate,
-                        type: url.includes('/jobs/') ? 'Fresher Job' : 'Internship',
-                        source: 'Internshala',
-                        sourceUrl: url
-                    });
-                }
-            });
-
-            console.log(`  ✅ Internshala [${url.split('/').filter(Boolean).pop()}]: ${pageJobs.length} jobs`);
-            return pageJobs;
+            // Fetch page 1 and page 2 in parallel for each category
+            const [page1, page2] = await Promise.all([
+                scrapeInternshalaPage(baseUrl, type).catch(() => []),
+                scrapeInternshalaPage(`${baseUrl}?page=2`, type).catch(() => []),
+            ]);
+            const combined = [...page1, ...page2];
+            console.log(`  ✅ Internshala [${slug}]: ${combined.length} (p1:${page1.length} p2:${page2.length})`);
+            return combined;
         } catch (error) {
-            console.warn(`  [!] Internshala failed for ${url.split('/').filter(Boolean).pop()}: ${error.message}`);
+            console.warn(`  [!] Internshala failed for ${slug}: ${error.message}`);
             return [];
         }
     });
@@ -85,10 +119,14 @@ async function fetchJobs(urls) {
 const DEV_KEYWORDS = [
     'software', 'developer', 'engineer', 'frontend', 'backend', 'full stack', 'fullstack',
     'react', 'next', 'next.js', 'nextjs', 'node', 'express', 'mern', 'mongodb',
-    'python', 'javascript', 'typescript', 'java', 'devops', 'cloud',
-    'data', 'machine learning', 'ai ', 'ml ', 'llm', 'generative', 'langchain',
+    'python', 'django', 'flask', 'fastapi',
+    'javascript', 'typescript', 'java', 'devops', 'cloud', 'aws', 'gcp', 'azure',
+    'data science', 'data analyst', 'machine learning', 'deep learning',
+    'artificial intelligence', 'ai ', 'ml ', 'llm', 'generative', 'langchain',
+    'ai agent', 'agentic', 'rag', 'vector', 'openai', 'gemini', 'groq',
     'n8n', 'workflow automation', 'zapier', 'make.com', 'automation',
-    'api', 'web', 'mobile', 'ios', 'android', 'intern', 'fresher', 'trainee', 'junior'
+    'flutter', 'android', 'ios', 'mobile', 'app development',
+    'api', 'web', 'intern', 'fresher', 'trainee', 'junior', 'entry level'
 ];
 
 function isDevRole(title = '') {
@@ -368,6 +406,78 @@ async function fetchRemoteOKJobs(tags = ['javascript', 'python', 'react', 'node'
     }
 
     console.log(`  ✅ RemoteOK: ${allJobs.length} jobs`);
+    return allJobs;
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SOURCE 7: INDEED RSS — India fresher tech jobs (last 1 day)
+// ─────────────────────────────────────────────────────────────────────────────
+async function fetchIndeedJobs() {
+    const queries = [
+        'fresher+full+stack+developer',
+        'fresher+react+developer',
+        'fresher+python+developer',
+        'fresher+nodejs+developer',
+        'fresher+mern+stack',
+        'junior+software+developer+india',
+        'fresher+AI+developer',
+    ];
+
+    console.log(`- Indeed RSS: Fetching fresher jobs...`);
+    const allJobs = [];
+    const seen = new Set();
+
+    for (const q of queries) {
+        try {
+            const url = `https://in.indeed.com/rss?q=${q}&l=India&sort=date&fromage=1`;
+            const response = await axios.get(url, {
+                timeout: 12000,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                    'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+                }
+            });
+
+            const $ = cheerio.load(response.data, { xmlMode: true });
+
+            $('item').each((_, item) => {
+                const title = $(item).find('title').first().text().trim();
+                const link  = $(item).find('link').next().text().trim() || $(item).find('link').text().trim();
+                const company = $(item).find('source').text().trim() || 'Company on Indeed';
+                const pubDate = $(item).find('pubDate').text().trim();
+                const location = $(item).find('location').text().trim() || 'India';
+                const guid = $(item).find('guid').text().trim();
+
+                if (!title || !link || seen.has(guid || link)) return;
+                if (isBlocked(company)) return;
+                if (!isDevRole(title)) return;
+                seen.add(guid || link);
+
+                const posted = pubDate ? new Date(pubDate) : new Date();
+
+                allJobs.push({
+                    id: `indeed-${Buffer.from(guid || link).toString('base64').substr(0, 16)}`,
+                    title,
+                    company,
+                    applyLink: link,
+                    stipend: 'As per industry',
+                    location,
+                    duration: 'Full-time',
+                    startDate: posted.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+                    type: 'Fresher Job',
+                    source: 'Indeed',
+                    sourceUrl: url
+                });
+            });
+
+            await delay(300);
+        } catch (e) {
+            console.warn(`  [!] Indeed RSS "${q}" failed: ${e.message}`);
+        }
+    }
+
+    console.log(`  ✅ Indeed: ${allJobs.length} jobs`);
     return allJobs;
 }
 

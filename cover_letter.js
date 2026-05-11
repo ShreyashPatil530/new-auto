@@ -2,19 +2,57 @@ const Groq = require('groq-sdk');
 const dotenv = require('dotenv');
 dotenv.config();
 
+const PROFILE = require('./profile.json');
 const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null;
 
+// Detect job type: 'aiagent' | 'data' | 'fullstack'
+function detectJobType(jobTitle = '') {
+    const t = jobTitle.toLowerCase();
+    const isAIAgent = ['ai agent', 'agentic', 'llm', 'langchain', 'langgraph', 'crewai',
+        'generative ai', 'gen ai', 'genai', 'rag', 'openai', 'groq', 'gemini',
+        'ai engineer', 'ai developer', 'ml engineer', 'nlp engineer',
+        'prompt engineer', 'ai automation', 'ai intern'].some(k => t.includes(k));
+    const isData = ['data scientist', 'data analyst', 'machine learning', 'business analyst',
+        'data engineer', 'deep learning', 'power bi', 'tableau', 'analytics',
+        'business intelligence'].some(k => t.includes(k));
+    const isFullStack = ['full stack', 'fullstack', 'mern', 'react', 'node', 'next.js',
+        'nextjs', 'frontend', 'backend', 'web developer', 'javascript', 'typescript',
+        'software engineer', 'software developer'].some(k => t.includes(k));
+
+    if (isAIAgent) return 'aiagent';
+    if (isData && !isFullStack) return 'data';
+    if (isFullStack && !isData) return 'fullstack';
+    return 'fullstack'; // default
+}
+
+function getProfile(jobTitle) {
+    const type = detectJobType(jobTitle);
+    const p = type === 'aiagent' ? PROFILE.aiAgent
+             : type === 'data'   ? PROFILE.dataScience
+             : PROFILE.fullstack;
+    const proj = p.projects.slice(0, 2).map(pr => `${pr.name} (${pr.tech}): ${pr.desc}`).join(' | ');
+    return { type, summary: p.summary, skills: p.skills, projects: proj, certs: p.certifications.slice(0, 2).join(', ') };
+}
+
 async function generateCoverLetter(jobTitle, company) {
-    if (!groq) return defaultCoverLetter(jobTitle, company);
+    const { type, summary, skills, projects } = getProfile(jobTitle);
 
-    const prompt = `Write a short, genuine cover letter for a FRESHER applying to "${jobTitle}" at "${company}".
+    if (!groq) return defaultCoverLetter(jobTitle, company, type);
 
-Candidate skills: MERN Stack (MongoDB, Express, React, Node.js), Next.js, Python, AI/ML, REST APIs, n8n workflow automation, LLM integrations.
+    const prompt = `Write a short, genuine cover letter for ${PROFILE.name} applying to "${jobTitle}" at "${company}".
+
+Candidate Profile:
+- ${PROFILE.education.degree}, ${PROFILE.education.college} (CGPA: ${PROFILE.education.cgpa}, graduating ${PROFILE.education.graduation})
+- Current: ${PROFILE.experience.title} at ${PROFILE.experience.company} (${PROFILE.experience.duration})
+- Skills: ${skills}
+- Key Projects: ${projects}
+- Portfolio: ${PROFILE.portfolio} | GitHub: ${PROFILE.github}
 
 Rules:
 - Under 120 words
-- Sound human and enthusiastic, NOT robotic
-- Mention 2-3 relevant skills specific to the job title
+- Sound human and enthusiastic, NOT robotic or templated
+- Mention 2-3 skills most relevant to "${jobTitle}"
+- Reference 1 specific project or achievement that fits this role
 - No "Dear Hiring Manager", no subject line — just the body
 - End with: available to join immediately
 
@@ -28,40 +66,52 @@ Return ONLY the cover letter body text.`;
             max_tokens: 250,
         });
         const text = completion.choices[0].message.content.trim();
-        console.log(`  ✅ Cover letter generated for "${jobTitle}" at ${company}`);
+        console.log(`  ✅ Cover letter generated (${type} profile) for "${jobTitle}" at ${company}`);
         return text;
     } catch (e) {
         console.warn('  ! Cover letter AI failed, using default:', e.message);
-        return defaultCoverLetter(jobTitle, company);
+        return defaultCoverLetter(jobTitle, company, type);
     }
 }
 
-function defaultCoverLetter(jobTitle, company) {
-    return `I'm a fresher full-stack developer with hands-on experience in MERN Stack (MongoDB, Express, React, Node.js), Next.js, and AI/ML integrations. I've built production-ready applications using REST APIs, Python, and AI workflow automation tools like n8n and Langchain.
+function defaultCoverLetter(jobTitle, company, type) {
+    if (type === 'aiagent') {
+        return `I'm a final-year B.Tech CSE student specializing in AI agent development. I've built production-ready multi-agent systems using CrewAI and LangGraph (for resume tailoring pipelines), a RAG-powered PDF Q&A bot with vector embeddings, and browser-use AI agents for autonomous web tasks including CAPTCHA solving and faculty data scraping. I also built a full Internshala auto-apply system using Puppeteer + Groq LLaMA with AI-generated cover letters.
 
-I'm genuinely excited about the ${jobTitle} role at ${company} — it aligns perfectly with my technical skills and my passion for building real-world products. I'm a fast learner who picks up new technologies quickly and loves shipping things that matter.
+The ${jobTitle} role at ${company} perfectly matches my hands-on experience in LLM integrations, agentic workflows, and AI automation. Available to join immediately.`;
+    }
+    if (type === 'data') {
+        return `I'm a final-year B.Tech CSE student at TKIET with strong expertise in Python, SQL, Machine Learning, and Power BI. I won a Bronze Medal on Kaggle (Road Accident Risk Prediction) achieving RMSE 0.0554 on 172k+ data points, and built production-ready dashboards analyzing 100,000+ transactions with 20–60% reduction in reporting time.
 
-I'm available to join immediately and would love the opportunity to contribute to your team from day one.`;
+The ${jobTitle} role at ${company} is a perfect match for my skills in data analysis, feature engineering, and business intelligence. I'm passionate about turning raw data into actionable insights and available to join immediately.`;
+    }
+    return `I'm a final-year B.Tech CSE student currently interning as a MERN Stack Developer at MAYASABHAXR Technologies, where I build scalable full-stack applications using React.js, Next.js, TypeScript, Node.js, and MongoDB. I've delivered 20+ real-world projects including admin dashboards with JWT/RBAC authentication, a Store Rating Platform (NestJS + Prisma + PostgreSQL), and AI-integrated web apps.
+
+The ${jobTitle} role at ${company} aligns perfectly with my hands-on experience. I bring strong skills in REST API integration, clean architecture, and Agile development. Available to join immediately.`;
 }
 
-/**
- * Generates a specific answer for a custom application question using AI.
- */
 async function generateAnswer(question, jobTitle, company) {
-    if (!groq) return defaultAnswer(question);
+    const { type, skills, projects } = getProfile(jobTitle);
 
-    const prompt = `Answer this internship application question as a fresher MERN Stack developer.
+    if (!groq) return defaultAnswer(question, type);
+
+    const prompt = `Answer this internship/job application question as ${PROFILE.name}, a fresher developer.
 
 Question: "${question}"
 Job: ${jobTitle} at ${company}
 
-Candidate profile: Fresher full-stack developer. Skills: MERN Stack (MongoDB, Express, React, Node.js), Next.js, Python, AI/ML, REST APIs. Has built projects with file uploads, data processing, APIs, automation.
+Candidate:
+- Final-year B.Tech CSE, TKIET (CGPA 7.75, graduating May 2026)
+- Currently: ${PROFILE.experience.title} at ${PROFILE.experience.company}
+- Skills: ${skills}
+- Projects: ${projects}
+- GitHub: ${PROFILE.github} | Portfolio: ${PROFILE.portfolio}
 
 Rules:
 - 2-4 sentences only
-- Sound genuine and technical, not robotic
-- For yes/no questions, say Yes with a brief reason
-- Be specific to the question asked
+- Sound genuine and specific, NOT robotic
+- For yes/no questions, answer Yes with a brief technical reason
+- Be specific to the question, reference real skills/projects when relevant
 
 Return ONLY the answer text, nothing else.`;
 
@@ -75,21 +125,63 @@ Return ONLY the answer text, nothing else.`;
         return completion.choices[0].message.content.trim();
     } catch (e) {
         console.warn('  ! Answer generation failed, using default:', e.message);
-        return defaultAnswer(question);
+        return defaultAnswer(question, type);
     }
 }
 
-function defaultAnswer(question) {
+function defaultAnswer(question, type = 'fullstack') {
     const q = question.toLowerCase();
-    if (q.includes('laptop') || q.includes('internet') || q.includes('device'))
-        return 'Yes, I have a reliable laptop and stable high-speed internet connection.';
-    if (q.includes('duplicate') || q.includes('match') || q.includes('database'))
-        return 'I would use fuzzy string matching (Levenshtein distance) combined with normalization (lowercase, remove punctuation) to identify duplicates. In MongoDB I would use aggregation pipelines with regex for flexible matching.';
-    if (q.includes('file') || q.includes('upload') || q.includes('csv') || q.includes('excel') || q.includes('json'))
-        return 'Yes, I have built a project that handled CSV and JSON file uploads using Node.js with multer and processed the data using Python pandas. The processed results were stored in MongoDB and displayed via a React dashboard.';
-    if (q.includes('experience') || q.includes('project'))
-        return 'I have built several full-stack projects using MERN Stack including a REST API backend with Node.js/Express, React frontend, and MongoDB database. I am comfortable with both frontend and backend development.';
-    return 'Yes, I am confident I can handle this effectively. I have hands-on experience with MERN Stack, Python, and data processing, and I am a quick learner who adapts fast to new requirements.';
+
+    if (q.includes('laptop') || q.includes('internet') || q.includes('device') || q.includes('system'))
+        return 'Yes, I have a reliable laptop with stable high-speed internet. I have been working remotely in my current internship without any connectivity issues.';
+
+    if (q.includes('available') || q.includes('join') || q.includes('start'))
+        return 'Yes, I am available to join immediately with zero notice period.';
+
+    if (q.includes('experience') || q.includes('background') || q.includes('tell us about')) {
+        if (type === 'aiagent')
+            return 'I am a final-year B.Tech CSE student specializing in AI agent development. I have built multi-agent systems using CrewAI and LangGraph, a RAG PDF Q&A bot with vector embeddings, browser-use AI agents for autonomous web tasks, and an Internshala auto-apply system using Puppeteer and Groq LLaMA.';
+        if (type === 'data')
+            return 'I am a final-year B.Tech CSE student with hands-on experience in Python, SQL, Machine Learning, and Power BI. I won a Kaggle Bronze Medal for Road Accident Risk Prediction (RMSE 0.0554, ranked 1,751 among 1000+ participants) and built dashboards processing 100,000+ transactions.';
+        return 'I am a final-year B.Tech CSE student currently interning as a MERN Stack Developer at MAYASABHAXR Technologies, building scalable full-stack applications with React.js, TypeScript, Node.js, and MongoDB. I have delivered 20+ real-world projects including admin dashboards and AI-integrated platforms.';
+    }
+
+    if (q.includes('project') || q.includes('built') || q.includes('developed')) {
+        if (type === 'aiagent')
+            return 'I built a CrewAI + Groq LLaMA multi-agent resume pipeline, a LangGraph resume tailoring agent, a RAG-powered PDF Q&A bot, and browser-use agents for CAPTCHA solving and faculty data scraping. I also built a full Internshala auto-apply bot with AI-generated cover letters.';
+        if (type === 'data')
+            return 'I built an ensemble ML model (XGBoost + LightGBM) winning Kaggle Bronze Medal (RMSE 0.0554, ranked 1,751/1000+), a Blinkit Sales Dashboard analyzing 100,000+ transactions with 15+ Power BI KPIs, and a Diabetes Prediction model with 78%+ accuracy.';
+        return 'I built a full-stack college management platform (MERN + TypeScript, live at college-fe.onrender.com), a Store Rating Platform (NestJS + Prisma + PostgreSQL), and a SEO-optimized Next.js tourism site. Currently building production features at MAYASABHAXR Technologies.';
+    }
+
+    if (q.includes('why') && (q.includes('hire') || q.includes('you') || q.includes('us'))) {
+        if (type === 'aiagent')
+            return 'I bring hands-on experience building production AI agent systems with CrewAI, LangGraph, RAG, and browser-use. I have shipped real working agentic pipelines, not just tutorials. I am a fast learner passionate about the LLM space and available to join immediately.';
+        if (type === 'data')
+            return 'I bring proven ML competition results (Kaggle Bronze Medal), strong Python and SQL skills, and real Power BI dashboards in production. I turn raw data into business decisions and I am available to join immediately.';
+        return 'I bring hands-on MERN Stack internship experience, 20+ real-world projects, and strong skills in React.js, TypeScript, Node.js, and MongoDB. I write clean, production-ready code and I am available to join immediately.';
+    }
+
+    if (q.includes('llm') || q.includes('langchain') || q.includes('openai') || q.includes('ai agent') || q.includes('groq') || q.includes('rag'))
+        return 'Yes, I have hands-on experience with LLM integrations using Groq LLaMA, OpenAI GPT-4, and Gemini. I built multi-agent systems with CrewAI and LangGraph, a RAG pipeline with vector embeddings, and production agentic workflows for real use cases.';
+
+    if (q.includes('sql') || q.includes('database') || q.includes('query'))
+        return 'Yes, I have strong SQL skills with HackerRank SQL Intermediate certification. I have worked with MySQL, PostgreSQL, and MongoDB building optimized schemas and complex aggregation queries across multiple projects.';
+
+    if (q.includes('python'))
+        return 'Yes, Python is my primary language. I use it for AI agent development (CrewAI, LangGraph, RAG), data analysis (Pandas, NumPy), machine learning (Scikit-learn, XGBoost), and backend APIs (Flask). I have a HackerRank Python certification and Kaggle Bronze Medal.';
+
+    if (q.includes('react') || q.includes('frontend'))
+        return 'Yes, I have hands-on React.js experience building admin dashboards and dynamic UIs with TypeScript, hooks, and REST API integration in my current internship at MAYASABHAXR Technologies.';
+
+    if (q.includes('node') || q.includes('backend') || q.includes('express'))
+        return 'Yes, I work with Node.js and Express.js daily in my current internship, building RESTful APIs, JWT authentication systems, and MongoDB-backed backends for production applications.';
+
+    if (type === 'aiagent')
+        return 'Yes, I can handle this effectively. I have built production AI agent systems with CrewAI, LangGraph, RAG, and browser-use automation, and I am comfortable with the full LLM stack from prompt engineering to deployment.';
+    if (type === 'data')
+        return 'Yes, I am confident I can handle this. I have hands-on experience with Python, SQL, ML modeling, and Power BI, and I am a fast learner who adapts quickly to new data challenges.';
+    return 'Yes, I am confident I can handle this. I have hands-on MERN Stack internship experience, strong skills in React.js, Node.js, TypeScript, and MongoDB, and I deliver production-ready features. Available to join immediately.';
 }
 
 module.exports = { generateCoverLetter, generateAnswer };

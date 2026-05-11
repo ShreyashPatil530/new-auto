@@ -1,0 +1,207 @@
+{
+  "name": "Shreyash Patil",
+  "phone": "+91 8618170841",
+  "email": "shreyashpatil530@gmail.com",
+  "location": "Nipani, Karnataka, India",
+  "linkedin": "linkedin.com/in/shreyash-patil-ba921737b",
+  "github": "github.com/ShreyashPatil530",
+  "kaggle": "kaggle.com/shreyashpatil217",
+  "portfolio": "shreyash-patil-portfolio1.netlify.app",
+
+  "education": {
+    "degree": "B.Tech Computer Science & Engineering",
+    "college": "TKIET, Warananagar",
+    "period": "2022–2026",
+    "cgpa": "7.75/10",
+    "graduation": "May 2026"
+  },
+
+  "experience": {
+    "title": "MERN Stack Developer Intern",
+    "company": "MAYASABHAXR Technologies Private Limited",
+    "duration": "Dec 2025 – Present",
+    "highlights": [
+      "Building scalable full-stack web applications using MERN Stack and TypeScript",
+      "Developing admin dashboards for user, content, and application management",
+      "Implementing JWT-based authentication and role-based access control (RBAC)",
+      "Integrating REST APIs for dynamic content and collaborating in Agile teams"
+    ]
+  },
+
+  "fullstack": {
+    "summary": "Final-year B.Tech CSE student currently interning as a MERN Stack Developer at MAYASABHAXR Technologies. Hands-on experience building scalable full-stack applications with React.js, Next.js, TypeScript, Node.js, Express.js, MongoDB, MySQL, Firebase, and REST APIs. Built 20+ real-world projects including admin dashboards, RBAC systems, AI-integrated web apps, and developer productivity tools.",
+    "skills": "React.js, Next.js, TypeScript, Node.js, Express.js, MongoDB, MySQL, Firebase, REST APIs, JWT, NestJS, Prisma, PostgreSQL, Flask (Python), HTML5, CSS3, JavaScript (ES6+), Bootstrap, Chart.js, Git, GitHub, Vercel, Render",
+    "projects": [
+      {
+        "name": "StackSpend – AI Subscription Auditor",
+        "tech": "TypeScript, Next.js, Vercel",
+        "link": "https://stack-spend.vercel.app",
+        "desc": "Audits AI subscriptions, identifies redundant plans and suggests cheaper alternatives. Live production app deployed on Vercel."
+      },
+      {
+        "name": "Store Rating Platform",
+        "tech": "React, TypeScript, NestJS, Prisma, PostgreSQL",
+        "link": "github.com/ShreyashPatil530/store-rating-platform",
+        "desc": "Production-ready full-stack store rating platform with role-based access, JWT auth, NestJS backend, and Prisma ORM."
+      },
+      {
+        "name": "College Website & Admin Panel – Vivekanand College",
+        "tech": "MERN Stack, TypeScript, MongoDB, REST APIs",
+        "link": "https://college-fe.onrender.com/",
+        "desc": "Full-stack college management platform with RBAC admin dashboard, secure JWT auth, modules for gallery, notices, events, and student management."
+      },
+      {
+        "name": "Tourism Website with SEO & Admin Panel",
+        "tech": "Next.js, Firebase, JavaScript, SEO",
+        "link": "https://turiesom-site.netlify.app/",
+        "desc": "SEO-optimized Next.js tourism platform with Firebase auth and admin panel for blog and content management."
+      },
+      {
+        "name": "Developer Productivity Dashboard",
+        "tech": "JavaScript, React",
+        "link": "https://mvp-dashboard-developer-productivit.vercel.app",
+        "desc": "MVP dashboard tracking developer productivity metrics with live data visualization."
+      },
+      {
+        "name": "AI Blog Generator",
+        "tech": "Next.js, OpenAI GPT-4, Vercel",
+        "link": "https://ai-blog-generator-project.vercel.app",
+        "desc": "Transforms topics into full blog posts using GPT-4, deployed on Vercel."
+      },
+      {
+        "name": "EcholyxAI – Sound Anomaly Detection Platform",
+        "tech": "Next.js, TypeScript, Tailwind CSS, FastAPI, ML Model (trained), Resend Email",
+        "link": "https://echolyxai.com",
+        "desc": "Freelance production SaaS. Sound anomaly detection platform with trained ML model served via FastAPI. Full SEO setup (sitemap, meta tags), Resend transactional email, custom domain deployed. Built end-to-end from scratch."
+      },
+      {
+        "name": "Aasha Foundation – NGO Website with Admin Panel",
+        "tech": "Next.js, TypeScript, Tailwind CSS, Node.js, Express.js, MongoDB, AWS S3",
+        "link": "https://aasha.foundation",
+        "desc": "Freelance production NGO website. Admin panel for managing gallery, awards (Puraska), and form submission details. AWS S3 for media storage, MongoDB backend, fully deployed with custom domain."
+      },
+      {
+        "name": "Job Automation Bot (Internshala Auto-Apply)",
+        "tech": "Node.js, Puppeteer, MERN Stack, Groq LLaMA, MongoDB",
+        "link": "github.com/ShreyashPatil530",
+        "desc": "End-to-end job scraping and auto-apply system with AI filter chain (Groq/Gemini), MongoDB dedup, automated email alerts, and GitHub Actions CI/CD."
+      }
+    ],
+    "certifications": [
+      "Flask Certification – Coursera",
+      "JavaScript Certification – Coursera",
+      "Git & GitHub – Version Control Fundamentals (Coursera)"
+    ]
+  },
+
+  "aiAgent": {
+    "summary": "Final-year B.Tech CSE student specializing in AI agent development with hands-on experience in CrewAI, LangGraph, RAG pipelines, and browser automation agents. Built production-ready multi-agent systems using Groq LLaMA, OpenAI, LangChain, and browser-use framework. Strong background in LLM integrations, agentic workflows, and AI-powered automation.",
+    "skills": "Python, CrewAI, LangGraph, LangChain, RAG, Groq (LLaMA 3.3), OpenAI GPT-4, Gemini, browser-use, Puppeteer, Flask, FastAPI, Vector Databases, PDF processing, n8n, REST APIs, GitHub Actions",
+    "projects": [
+      {
+        "name": "CrewAI Resume Pipeline",
+        "tech": "Python, CrewAI, Groq LLaMA",
+        "link": "github.com/ShreyashPatil530/crewai-resume-pipeline",
+        "desc": "Multi-agent AI pipeline using CrewAI and Groq LLaMA to automatically tailor resumes to specific job descriptions."
+      },
+      {
+        "name": "LangGraph Resume Tailoring Agent",
+        "tech": "Python, LangGraph, LangChain",
+        "link": "github.com/ShreyashPatil530/langgraph-resume-tailoring-agent",
+        "desc": "Production-ready LangGraph agent that analyzes job descriptions and intelligently rewrites resume sections for maximum ATS compatibility."
+      },
+      {
+        "name": "RAG PDF Q&A Bot",
+        "tech": "Python, RAG, Vector DB, LangChain",
+        "link": "github.com/ShreyashPatil530/rag-pdf-qa-bot",
+        "desc": "RAG-powered PDF Q&A system with cited answers, vector embeddings, and context-aware responses."
+      },
+      {
+        "name": "Browser-Use CAPTCHA Solver Agent",
+        "tech": "Python, browser-use, AI Vision",
+        "link": "github.com/ShreyashPatil530/browser-use-captcha-solver",
+        "desc": "AI agent that autonomously solves Google reCAPTCHA v2 with checkbox and image challenges using vision models."
+      },
+      {
+        "name": "Browser-Use Faculty Scout",
+        "tech": "Python, browser-use, Web Scraping",
+        "link": "github.com/ShreyashPatil530/browser-use-faculty-scout",
+        "desc": "AI agent autonomously scrapes CS faculty research data from university websites using browser automation."
+      },
+      {
+        "name": "EcholyxAI – Sound Anomaly Detection SaaS",
+        "tech": "Next.js, TypeScript, FastAPI, ML Model (trained), Resend",
+        "link": "https://echolyxai.com",
+        "desc": "Freelance production SaaS — trained ML model for sound anomaly detection served via FastAPI. Full SEO, transactional email via Resend, deployed live with custom domain."
+      },
+      {
+        "name": "Internshala Auto-Apply System",
+        "tech": "Node.js, Puppeteer, Groq LLaMA, GitHub Actions",
+        "link": "github.com/ShreyashPatil530",
+        "desc": "Agentic job application system that scrapes listings, runs AI filter (Groq/Gemini/DeepSeek), generates personalized cover letters, and auto-applies via Puppeteer."
+      }
+    ],
+    "certifications": [
+      "Kaggle Feature Engineering – October 2025",
+      "Kaggle Intermediate Machine Learning – April 2024"
+    ]
+  },
+
+  "dataScience": {
+    "summary": "Final-year B.Tech CSE student with hands-on expertise in Python, SQL, Machine Learning, and Business Intelligence. Built 8+ real-world ML projects including predictive models (78–85% accuracy), ensemble systems, and GenAI solutions. Won Kaggle Bronze Medal (Road Accident Risk Prediction). Specialized in data visualization, ETL pipelines, feature engineering, and automation reducing manual effort by 20–60%.",
+    "skills": "Python, SQL, Pandas, NumPy, Scikit-learn, XGBoost, LightGBM, TensorFlow, Keras, Matplotlib, Seaborn, Power BI, Tableau, DAX, Excel (Advanced), MySQL, PostgreSQL, Flask, ARIMA, NLP, Deep Learning, CNN, Generative AI, Feature Engineering, Hyperparameter Tuning",
+    "projects": [
+      {
+        "name": "Road Accident Risk Prediction – Kaggle Bronze Medal",
+        "tech": "Python, XGBoost, LightGBM, Feature Engineering",
+        "link": "https://github.com/ShreyashPatil530/Road-Accident-Risk-Prediction",
+        "desc": "Won Bronze Medal on Kaggle Playground Series S5E10. Achieved RMSE 0.0554 on 172,585+ road segments, ranked 1,751 among 1000+ participants. Ensemble model with polynomial feature engineering."
+      },
+      {
+        "name": "Blinkit Sales Analysis Dashboard",
+        "tech": "Python, Power BI, DAX, Pandas",
+        "link": "github.com/ShreyashPatil530/Blinkit-Sales-Analysis",
+        "desc": "Analyzed 100,000+ transactions across 20+ product categories. Built interactive Power BI dashboards with 15+ KPIs tracking monthly sales and seasonal patterns."
+      },
+      {
+        "name": "Diabetes Prediction Using Machine Learning",
+        "tech": "Python, Scikit-learn, ML Classification",
+        "link": "github.com/ShreyashPatil530/Diabetes-Prediction-Using-Machine-Learning",
+        "desc": "ML solution predicting diabetes with 78%+ accuracy using ensemble classification and feature selection techniques."
+      },
+      {
+        "name": "Flight Price Analysis & Prediction",
+        "tech": "Python, Scikit-learn, Regression",
+        "link": "github.com/ShreyashPatil530/Flight-Price-Analysis",
+        "desc": "Predicts flight ticket prices using machine learning with feature engineering on departure time, airline, and route data."
+      },
+      {
+        "name": "Image Classification with CNNs",
+        "tech": "Python, TensorFlow, Keras, Deep Learning",
+        "link": "github.com/ShreyashPatil530/Image-Classification-with-CNNs",
+        "desc": "CNN-based image classification model built with TensorFlow/Keras with data augmentation and transfer learning."
+      },
+      {
+        "name": "Amazon Sales & Reviews Analysis",
+        "tech": "Python, Power BI, Pandas",
+        "link": "github.com/ShreyashPatil530/Amazon-Sales-Reviews",
+        "desc": "Analyzes revenue, units sold, and review sentiment by region with interactive BI dashboards."
+      }
+    ],
+    "certifications": [
+      "HackerRank SQL (Basic & Intermediate) – July 2025",
+      "HackerRank Python (Basic) – July 2025",
+      "Kaggle Feature Engineering – October 2025",
+      "Kaggle Intermediate Machine Learning – April 2024"
+    ],
+    "achievements": [
+      "Kaggle Bronze Medal – Road Accident Risk Prediction (S5E10)",
+      "Ranked 1,751 among 1000+ Kaggle participants, RMSE 0.0554",
+      "Automation workflows reducing reporting time by 20–60%"
+    ]
+  },
+
+  "languages": ["English (Professional)", "Hindi (Native)", "Marathi (Native)"],
+  "availability": "immediately",
+  "joinInDays": 0
+}

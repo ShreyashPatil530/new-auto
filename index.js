@@ -9,27 +9,47 @@ dotenv.config();
 
 // Internshala URLs (HTML scraping works fine here)
 const TECHNICAL_URLS = [
-    // MERN / Full Stack
+    // ── WFH Internships ──────────────────────────────────────────────────────
     'https://internshala.com/internships/work-from-home-full-stack-development-internships/',
     'https://internshala.com/internships/work-from-home-web-development-internships/',
-    'https://internshala.com/internships/work-from-home-javascript-development-internships/',
     'https://internshala.com/internships/work-from-home-reactjs-internships/',
     'https://internshala.com/internships/work-from-home-nodejs-internships/',
-    // AI / ML
-    'https://internshala.com/internships/work-from-home-artificial-intelligence-internships/',
-    'https://internshala.com/internships/work-from-home-machine-learning-internships/',
-    'https://internshala.com/internships/work-from-home-data-science-internships/',
-    // Python / Backend
+    'https://internshala.com/internships/work-from-home-javascript-development-internships/',
     'https://internshala.com/internships/work-from-home-python-django-internships/',
+    'https://internshala.com/internships/work-from-home-machine-learning-internships/',
+    'https://internshala.com/internships/work-from-home-artificial-intelligence-internships/',
+    'https://internshala.com/internships/work-from-home-data-science-internships/',
     'https://internshala.com/internships/work-from-home-computer-science-internships/',
-    // Fresher Jobs
+
+    // ── All-India Internships (Hybrid + On-site — previously MISSING) ─────────
+    'https://internshala.com/internships/mern-stack-internships/',
+    'https://internshala.com/internships/full-stack-development-internships/',
+    'https://internshala.com/internships/web-development-internships/',
+    'https://internshala.com/internships/reactjs-internships/',
+    'https://internshala.com/internships/nodejs-internships/',
+    'https://internshala.com/internships/next-js-internships/',
+    'https://internshala.com/internships/python-internships/',
+    'https://internshala.com/internships/artificial-intelligence-internships/',
+    'https://internshala.com/internships/machine-learning-internships/',
+    'https://internshala.com/internships/data-science-internships/',
+    'https://internshala.com/internships/generative-ai-internships/',
+    'https://internshala.com/internships/typescript-internships/',
+    'https://internshala.com/internships/flutter-internships/',
+    'https://internshala.com/internships/android-app-development-internships/',
+
+    // ── Fresher Jobs ──────────────────────────────────────────────────────────
     'https://internshala.com/jobs/full-stack-development-jobs/',
     'https://internshala.com/jobs/web-development-jobs/',
-    'https://internshala.com/jobs/python-development-jobs/',
-    'https://internshala.com/jobs/node-js-development-jobs/',
     'https://internshala.com/jobs/reactjs-jobs/',
+    'https://internshala.com/jobs/node-js-development-jobs/',
+    'https://internshala.com/jobs/mern-stack-jobs/',
+    'https://internshala.com/jobs/next-js-jobs/',
+    'https://internshala.com/jobs/python-development-jobs/',
     'https://internshala.com/jobs/artificial-intelligence-jobs/',
     'https://internshala.com/jobs/machine-learning-jobs/',
+    'https://internshala.com/jobs/data-science-jobs/',
+    'https://internshala.com/jobs/generative-ai-jobs/',
+    'https://internshala.com/jobs/typescript-jobs/',
 ];
 
 async function runJobSearch() {

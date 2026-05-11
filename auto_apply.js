@@ -3,6 +3,8 @@ const { generateCoverLetter, generateAnswer } = require('./cover_letter');
 const dotenv = require('dotenv');
 dotenv.config();
 
+const PROFILE = require('./profile.json');
+
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -203,11 +205,11 @@ async function clickApplyButton(page) {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FILL APPLICATION FORM (cover letter + radio buttons + custom questions)
+// FILL APPLICATION FORM (cover letter + personal details + custom questions)
 // ─────────────────────────────────────────────────────────────────────────────
 async function fillApplicationForm(page, coverLetter, jobTitle, company) {
 
-    // Step A: Handle radio buttons — select "Yes" wherever possible
+    // Step A: Radio buttons — select "Yes" wherever possible
     try {
         await page.evaluate(() => {
             document.querySelectorAll('input[type="radio"]').forEach(radio => {
@@ -223,12 +225,65 @@ async function fillApplicationForm(page, coverLetter, jobTitle, company) {
         console.log('     ✓ Radio buttons handled');
     } catch (_) {}
 
-    // Step B: Fill cover letter field
+    // Step B: Personal detail input fields from profile.json
+    const p = PROFILE;
+    const edu = p.education;
+
+    // Map: [selector patterns] → value to fill
+    const inputFills = [
+        // Name
+        { selectors: ['input[name="name"]', 'input[id*="name"]', 'input[placeholder*="name" i]'], value: p.name },
+        // Phone
+        { selectors: ['input[name="phone"]', 'input[name="mobile"]', 'input[id*="phone"]', 'input[placeholder*="phone" i]', 'input[type="tel"]'], value: p.phone },
+        // Email (usually pre-filled by Internshala, but just in case)
+        { selectors: ['input[name="email"]', 'input[id*="email"]', 'input[type="email"]'], value: p.email },
+        // College / University
+        { selectors: ['input[name="college"]', 'input[name="university"]', 'input[id*="college"]', 'input[placeholder*="college" i]', 'input[placeholder*="university" i]'], value: edu.college },
+        // Degree / Course
+        { selectors: ['input[name="degree"]', 'input[name="course"]', 'input[id*="degree"]', 'input[placeholder*="degree" i]', 'input[placeholder*="course" i]'], value: edu.degree },
+        // CGPA / GPA
+        { selectors: ['input[name="cgpa"]', 'input[name="gpa"]', 'input[id*="cgpa"]', 'input[placeholder*="cgpa" i]', 'input[placeholder*="gpa" i]'], value: edu.cgpa },
+        // Graduation year
+        { selectors: ['input[name="graduation_year"]', 'input[name="grad_year"]', 'input[placeholder*="graduation" i]', 'input[placeholder*="passing" i]'], value: '2026' },
+        // GitHub
+        { selectors: ['input[name="github"]', 'input[id*="github"]', 'input[placeholder*="github" i]'], value: `https://${p.github}` },
+        // Portfolio / Website
+        { selectors: ['input[name="portfolio"]', 'input[name="website"]', 'input[id*="portfolio"]', 'input[placeholder*="portfolio" i]', 'input[placeholder*="website" i]'], value: `https://${p.portfolio}` },
+        // LinkedIn
+        { selectors: ['input[name="linkedin"]', 'input[id*="linkedin"]', 'input[placeholder*="linkedin" i]'], value: `https://${p.linkedin}` },
+        // Availability (0 days = immediate)
+        { selectors: ['#availability', 'input[name="availability"]', 'input[placeholder*="availab" i]'], value: '0' },
+    ];
+
+    for (const { selectors, value } of inputFills) {
+        for (const sel of selectors) {
+            try {
+                const field = await page.$(sel);
+                if (!field) continue;
+                const tag  = await field.evaluate(el => el.tagName.toLowerCase());
+                const type = await field.evaluate(el => el.type || '');
+                if (tag !== 'input' || type === 'submit' || type === 'checkbox' || type === 'radio' || type === 'file') continue;
+                const current = await field.evaluate(el => el.value.trim());
+                if (current.length > 3) break; // already filled, skip
+                await field.click({ clickCount: 3 });
+                await field.evaluate(el => el.value = '');
+                await field.type(value, { delay: 20 });
+                await field.evaluate(el => {
+                    el.dispatchEvent(new Event('input',  { bubbles: true }));
+                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                    el.dispatchEvent(new Event('blur',   { bubbles: true }));
+                });
+                console.log(`     ✓ Filled [${sel}] → ${value.substring(0, 40)}`);
+                break;
+            } catch (_) {}
+        }
+    }
+
+    // Step C: Cover letter textarea
     const coverLetterSelectors = [
         '#cover_letter',
         'textarea[name="cover_letter"]',
-        'textarea[placeholder*="cover"]',
-        'textarea[placeholder*="Cover"]',
+        'textarea[placeholder*="cover" i]',
         '.cover-letter-text textarea',
     ];
     let coverFilled = false;
@@ -246,22 +301,8 @@ async function fillApplicationForm(page, coverLetter, jobTitle, company) {
         } catch (_) {}
     }
 
-    // Step C: Availability field (0 days = immediately)
+    // Step D: All remaining textareas → AI answers
     try {
-        const availField = await page.$('#availability, input[name="availability"]');
-        if (availField) {
-            const inputType = await availField.evaluate(el => el.type);
-            if (inputType === 'number' || inputType === 'text') {
-                await availField.click({ clickCount: 3 });
-                await availField.type('0', { delay: 30 });
-                console.log('     ✓ Availability: 0 days');
-            }
-        }
-    } catch (_) {}
-
-    // Step D: Find ALL custom question textareas and fill with AI answers
-    try {
-        // Get all textareas + their question context in one DOM pass
         const textareaData = await page.evaluate(() => {
             return [...document.querySelectorAll('textarea')].map((ta, i) => {
                 let questionText = '';
@@ -285,10 +326,10 @@ async function fillApplicationForm(page, coverLetter, jobTitle, company) {
             });
         });
 
-        console.log(`     → Found ${textareaData.length} textarea(s) to fill`);
+        console.log(`     → Found ${textareaData.length} textarea(s)`);
 
         for (const { index, question, currentValue } of textareaData) {
-            if (currentValue.length > 20) continue; // already has content
+            if (currentValue.length > 20) continue;
 
             let answer;
             const q = question.toLowerCase();
@@ -303,16 +344,11 @@ async function fillApplicationForm(page, coverLetter, jobTitle, company) {
                 answer = coverLetter;
             }
 
-            // Inject value via React-compatible JS setter (works even inside modals/iframes)
             await page.evaluate((idx, val) => {
                 const ta = document.querySelectorAll('textarea')[idx];
                 if (!ta) return;
                 const setter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
-                if (setter) {
-                    setter.call(ta, val);
-                } else {
-                    ta.value = val;
-                }
+                if (setter) setter.call(ta, val); else ta.value = val;
                 ta.dispatchEvent(new Event('input',  { bubbles: true }));
                 ta.dispatchEvent(new Event('change', { bubbles: true }));
                 ta.dispatchEvent(new Event('blur',   { bubbles: true }));
@@ -325,7 +361,7 @@ async function fillApplicationForm(page, coverLetter, jobTitle, company) {
         console.warn('     ! Custom question fill error:', e.message);
     }
 
-    // Step E: Handle any select dropdowns (pick first non-empty option)
+    // Step E: Select dropdowns — pick first non-empty option
     try {
         await page.evaluate(() => {
             document.querySelectorAll('select').forEach(sel => {
