@@ -45,25 +45,37 @@ async function filterChunk(limitedJobs) {
         source: j.source || 'Unknown'
     }));
 
-    const prompt = `You are a job relevance filter for a FRESHER Full-Stack/AI Developer (0 experience, just graduated).
+    const prompt = `You are a strict job relevance filter for a FRESHER developer applying to internships and entry-level jobs.
 
-CANDIDATE SKILLS: MERN Stack (MongoDB, Express, React, Node.js), Next.js, JavaScript, Python, AI/ML, REST APIs, AI Workflows (n8n, Zapier, Make), LLM integrations.
+CANDIDATE PROFILE:
+- Final-year B.Tech CSE student (TKIET, graduating May 2026, CGPA 7.75)
+- Currently interning: MERN Stack Developer at MAYASABHAXR Technologies
+- Full Stack Skills: React.js, Next.js, TypeScript, Node.js, Express.js, MongoDB, MySQL, Firebase, REST APIs, JWT, NestJS
+- AI/ML Skills: Python, CrewAI, LangGraph, RAG, Groq LLaMA, OpenAI, Gemini, browser-use, Puppeteer, LangChain
+- Data Science Skills: Pandas, NumPy, Scikit-learn, XGBoost, LightGBM, Power BI, SQL
+- Projects: Kaggle Bronze Medal (ML), 2 live freelance client websites, AI agent systems
 
-TASK: From the list below, return ONLY jobs suitable for a FRESHER (0 experience). Be strict on experience requirements.
+TASK: From the list below, return ONLY jobs that match the candidate's skills. Be VERY STRICT.
 
-HARD REJECT (any of these = reject):
-- Requires 1+ year experience, 2+ years, "minimum 1 year", "at least 1 year"
-- NGO, Social Work, Marketing, Sales, HR, Campus Ambassador, BPO, Data Entry
-- Non-tech roles, customer support, operations
+HARD REJECT — return [] for these:
+- Sales, Business Development, Marketing, Social Media, Content, SEO/SEM
+- HR, Recruiter, Operations, BPO, Data Entry, Customer Support
+- Finance, Accounting, CA, Legal, Architecture, Civil, Mechanical
+- Hotel, Hospitality, Fashion, Medical, Pharmacy
+- Crypto Trader, Stock Analyst, Trading, Investment
+- Influencer, Graphic Design (non-UI/UX), Video Editing
+- Any role requiring 1+ years experience
 
-ACCEPT (fresher-friendly tech roles only):
-- MERN Stack, React, Next.js, Node.js, Express, MongoDB
-- Full Stack, Frontend, Backend (0 exp / fresher / entry-level / internship)
-- Python, Django, FastAPI roles for freshers
-- AI/ML Engineer, AI Developer, LLM, Generative AI (fresher/intern level)
-- AI Workflow Automation (n8n, Zapier, Make, Langchain, AutoGPT)
-- Software Developer Intern, Junior Developer, Trainee Developer
-- DevOps, Cloud (fresher level), QA/Testing (fresher level)
+ACCEPT only these:
+- Full Stack / MERN / React / Next.js / Node.js / TypeScript Developer (fresher/intern)
+- Frontend / Backend Developer (fresher/intern)
+- Python / Django / Flask / FastAPI Developer (fresher/intern)
+- AI Engineer / ML Engineer / AI Developer / LLM Developer (fresher/intern)
+- Data Scientist / Data Analyst (fresher/intern)
+- AI Agent Developer / Automation Developer (n8n, LangChain, CrewAI)
+- Software Engineer / Software Developer (fresher/intern/trainee/junior)
+- DevOps / Cloud Engineer (fresher/intern)
+- Flutter / Android / Mobile Developer (fresher/intern)
 
 INPUT JOBS:
 ${JSON.stringify(jobSummaries, null, 2)}
@@ -126,12 +138,9 @@ If no jobs are relevant, return: []`;
         console.error(`  !!! All AI strategies failed: ${error.message}`);
     }
 
-    // Final Fallback: Return top 5 jobs unfiltered for manual review
-    console.log('  ⚠️ AI Engine stalled. Returning top 5 jobs for manual review.');
-    return limitedJobs.slice(0, 5).map(j => ({
-        ...j,
-        reason: 'Manual review required - AI filter unavailable'
-    }));
+    // Final Fallback: Skip this chunk — don't send unfiltered non-tech jobs
+    console.log('  ⚠️ AI Engine stalled. Skipping chunk to avoid non-tech job spam.');
+    return [];
 }
 
 

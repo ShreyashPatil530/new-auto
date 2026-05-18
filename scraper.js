@@ -29,6 +29,46 @@ const BLOCKED_COMPANIES = [
 
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
+// Hard reject — these title keywords are NEVER relevant regardless of category URL
+const HARD_REJECT_TITLES = [
+    'sales', 'business development', 'marketing', 'social media', 'content writer',
+    'seo', 'sem', 'influencer', 'brand', 'hr ', 'human resource', 'recruiter',
+    'bpo', 'data entry', 'customer support', 'customer care', 'telecaller',
+    'field work', 'field sales', 'door to door', 'collection agent',
+    'accountant', 'finance', 'ca ', 'chartered', 'tally', 'gst',
+    'hotel', 'hospitality', 'chef', 'cook', 'restaurant',
+    'architecture', 'interior design', 'civil', 'mechanical', 'electrical engineer',
+    'fashion', 'textile', 'pharmacy', 'medical', 'nurse', 'doctor',
+    'legal', 'law', 'advocate', 'journalist', 'media', 'graphic design',
+    'video edit', 'animation', 'illustrat', 'crypto trader', 'stock', 'trading',
+    'event manage', 'logistics', 'supply chain', 'procurement',
+];
+
+// Tech role keywords — Internshala title must match at least one
+const TECH_TITLE_KEYWORDS = [
+    'software', 'developer', 'engineer', 'programmer', 'coder',
+    'full stack', 'fullstack', 'frontend', 'backend', 'mern', 'mean',
+    'react', 'next.js', 'nextjs', 'angular', 'vue', 'svelte',
+    'node', 'express', 'django', 'flask', 'fastapi', 'spring',
+    'python', 'javascript', 'typescript', 'java ', 'golang', 'rust', 'php',
+    'android', 'ios', 'flutter', 'react native', 'mobile app',
+    'machine learning', 'deep learning', 'data science', 'data analyst',
+    'artificial intelligence', 'ai ', ' ml ', 'nlp', 'llm', 'generative',
+    'devops', 'cloud', 'aws', 'azure', 'gcp', 'kubernetes', 'docker',
+    'cybersecurity', 'blockchain', 'web3', 'ui/ux', 'ux design',
+    'database', 'mongodb', 'postgresql', 'mysql', 'sql developer',
+    'api', 'automation', 'scraping', 'web development', 'app development',
+    'intern', 'trainee', 'fresher', 'junior', 'entry level',
+];
+
+function isTechTitle(title = '') {
+    const t = title.toLowerCase();
+    // First hard reject
+    if (HARD_REJECT_TITLES.some(kw => t.includes(kw))) return false;
+    // Then must match at least one tech keyword
+    return TECH_TITLE_KEYWORDS.some(kw => t.includes(kw));
+}
+
 function isBlocked(company = '') {
     return BLOCKED_COMPANIES.some(b => company.toLowerCase().includes(b.toLowerCase()));
 }
@@ -57,6 +97,7 @@ async function scrapeInternshalaPage(url, type) {
         if (!titleElement.length || !relativeLink || isBlocked(company)) return;
 
         const title = titleElement.text().trim() || 'Internship';
+        if (!isTechTitle(title)) return; // hard reject non-tech sponsored listings
         const applyLink = `https://internshala.com${relativeLink}`;
         let stipend = $(element).find('.stipend').text().trim();
         if (!stipend) stipend = $(element).find('.desktop').text().trim() || 'Competitive';
