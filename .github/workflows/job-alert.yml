@@ -3,7 +3,8 @@ name: 🚀 Advanced Job Alert System
 
 on:
   schedule:
-    - cron: '30 * * * *' # Run at half-past every hour
+    - cron: '0 * * * *'   # Every hour at :00
+    - cron: '30 * * * *'  # Every hour at :30 (backup)
   workflow_dispatch: # Manual trigger
 
 concurrency:
